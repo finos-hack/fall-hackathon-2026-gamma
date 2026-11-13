@@ -510,7 +510,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 
 ### Day 2 — Sat 14 Nov (engine)
 - [x] **2.1 Guard core** (Sonnet). types, store, clock, `evaluate` steps 0–3 and 5–7 + 9, approvals (incl. four-eyes, expiry), hash-chained audit + verify + CSV, trace spans to JSONL, all endpoints except scenarios/evidence/finos. **DoD:** S1 and S2 pass as tests; extra tests for budget/duplicate/four-eyes/audit tamper pass.
-- [ ] **2.2 Structuring + runaway** (Sonnet → Opus if stuck; explain first). SG-05, SG-07, suspension and resume. **DoD:** S3 and S5 tests + the structuring edge tests pass.
+- [x] **2.2 Structuring + runaway** (Sonnet → Opus if stuck; explain first). SG-05, SG-07, suspension and resume. **DoD:** S3 and S5 tests + the structuring edge tests pass.
 - [ ] **2.3 Delegation** (Sonnet → Opus if stuck; explain first). Grant creation D1–D5, authority context, shared debits. **DoD:** S4 test + delegation edge tests pass; all tests green.
 
 ### Day 3 — Sun 15 Nov (demo + UI)
@@ -603,3 +603,4 @@ Use the rubric's own words in the README and pitch: "multiple FINOS projects wor
 - Engine is `engine/{evaluate,authority,approvals}.ts` (rules are inline in `evaluate.ts`, not in `engine/rules/`). SG-05/SG-07 runaway are `skip` entries in the trace until 2.2; any `delegationId` is DENY `DELEGATION_INVALID` until 2.3 (`authority.ts` has own authority only).
 - Not built in 2.1 (per §8): `/api/scenarios`, `/api/delegations`, `/metrics`. `POST /api/reset` truncates the audit/trace files (demo only). `resume` is implemented (audit `AGENT_RESUMED`); nothing suspends yet.
 - Errors: `{error, message}` JSON; 404 NOT_FOUND, 403 UNKNOWN_APPROVER/ROLE_NOT_ALLOWED, 409 NOT_PENDING/FOUR_EYES_SAME_APPROVER, 400 BAD_REQUEST.
+- Task 2.2 done. SG-07 counts ALL of the agent's stored requests (any status, so looping denied duplicates also trips it) since its last resume (`AgentState.resumedAtSeq`). Identical = same service + `promptHash` (llm, only if given) or `paramsHash` (service). SG-05 lives inline in `evaluate.ts` step 8. The cross-helper structuring test is `it.skip` in `test/structuring.test.ts` until 2.3.

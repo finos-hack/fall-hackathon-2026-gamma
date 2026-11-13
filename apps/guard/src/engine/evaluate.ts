@@ -37,9 +37,10 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
   const auth = agent ? ownAuthority(ctx, input.agentId, input.caseId) : undefined;
   const snapshot = { tier: agent?.tier ?? '-', autoApproveUpTo: auth?.tier.autoApproveUpTo ?? 0, remaining: auth?.remaining ?? 0 };
 
-  const finish = (outcome: Outcome, reasonCode: string, reason: string, ruleId?: string, approvalsRequired?: 0 | 1 | 2) => {
+  const finish = (outcome: Outcome, reasonCode: string, reason: string, ruleId?: string, approvalsRequired?: 0 | 1 | 2,
+    linkedRequestIds?: string[]) => {
     const decision: Decision = {
-      requestId: request.id, outcome, reasonCode, reason, ruleId, ruleTrace: trace, approvalsRequired,
+      requestId: request.id, outcome, reasonCode, reason, ruleId, ruleTrace: trace, approvalsRequired, linkedRequestIds,
       policyVersion: policy.metadata.version, evaluatedAt: ts, calmControl: CALM_CONTROL, limitsSnapshot: snapshot,
     };
     request.status = outcome === 'approve' ? 'approved' : outcome === 'deny' ? 'denied' : 'pending';
@@ -154,8 +155,29 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
   } else step('SG-03', 'skip', 'disabled');
   step('SG-04', 'pass');
 
-  // 8 structuring (task 2.2)
-  step('SG-05', 'skip', 'structuring check not enabled yet');
+  // 8 structuring: several near-threshold buys of one service that together exceed the signing limit
+  if (enabled('SG-05')) {
+    const p = control('SG-05')?.params ?? {};
+    const near = Number(p.nearThresholdRatio ?? 0.5) * t.autoApproveUpTo;
+    const minParts = Number(p.minParts ?? 3);
+    const windowMs = Number(p.windowMinutes ?? 10) * 60_000;
+    if (input.kind === 'service' && request.amount >= near && request.amount <= t.autoApproveUpTo) {
+      const parts = [...store.requests.values()].filter((r) =>
+        r.caseId === request.caseId && r.rootAgentId === request.rootAgentId && r.service === request.service &&
+        (r.status === 'approved' || r.status === 'pending') && Date.parse(r.ts) >= Date.parse(ts) - windowMs && r.amount >= near);
+      const total = round4(parts.reduce((s, r) => s + r.amount, 0) + request.amount);
+      if (parts.length + 1 >= minParts && total > t.autoApproveUpTo) {
+        const linked = parts.map((r) => r.id);
+        step('SG-05', 'fail', `${parts.length + 1} near-limit buys of ${input.service} total ${usd(total)}`);
+        for (const r of parts)
+          ctx.audit.append('STRUCTURING_LINKED', 'spend-guard', { ...refsFor(ctx, r, store.decisions.get(r.id)), requestId: r.id, linkedTo: request.id, ruleId: 'SG-05' }, ts);
+        return finish('escalate', 'STRUCTURING',
+          `${parts.length + 1} purchases of "${input.service}" just under the signing limit add up to ${usd(total)}, above ${usd(t.autoApproveUpTo)}: looks like a split purchase, so a human must review.`,
+          'SG-05', 1, linked);
+      }
+      step('SG-05', 'pass', `${parts.length + 1} part(s), total ${usd(total)}`);
+    } else step('SG-05', 'skip', 'not a near-threshold service purchase');
+  } else step('SG-05', 'skip', 'disabled');
 
   // 9 approve
   return finish('approve', 'APPROVED', `Within ${input.agentId}'s signing limit (${usd(t.autoApproveUpTo)}) and budget.`);

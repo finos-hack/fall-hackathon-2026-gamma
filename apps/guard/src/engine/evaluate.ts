@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto';
 import { computeAmount } from '../policy/pricing.js';
-import { matchesAny } from '../policy/glob.js';
 import { canonical } from '../store/audit.js';
 import type { Decision, Outcome, RuleResult, SpendInput, SpendRequest } from '../types.js';
-import { CALM_CONTROL, ownAuthority, round4, type Ctx } from './authority.js';
+import { authorityOf, CALM_CONTROL, grantSpent, grantStatus, round4, type Ctx } from './authority.js';
 
 const hash16 = (v: unknown) => createHash('sha256').update(canonical(v)).digest('hex').slice(0, 16);
 const usd = (n: number) => `$${n.toFixed(2)}`;
@@ -17,9 +16,11 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
 
   const priced = computeAmount(policy, input);
   const agent = policy.agents[input.agentId];
+  const grant = input.delegationId ? store.delegations.get(input.delegationId) : undefined;
+  const grantOk = !!grant && agent !== undefined && grantStatus(ctx, grant) === 'active' && grant.childAgentId === input.agentId && grant.caseId === input.caseId;
   const request: SpendRequest = {
     id: store.nextId(), ts, caseId: input.caseId, agentId: input.agentId,
-    delegationId: input.delegationId, rootAgentId: input.agentId,
+    delegationId: input.delegationId, rootAgentId: grantOk ? grant!.rootAgentId : input.agentId,
     kind: input.kind, service: input.service,
     inputTokens: input.inputTokens, outputTokens: input.outputTokens, promptHash: input.promptHash,
     quantity: input.quantity, params: input.params, paramsHash: hash16(input.params ?? {}),
@@ -34,7 +35,7 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
     const c = control(ruleId);
     trace.push({ ruleId, result, detail, aigf: c?.aigf, ccc: c?.ccc });
   };
-  const auth = agent ? ownAuthority(ctx, input.agentId, input.caseId) : undefined;
+  const auth = agent ? authorityOf(ctx, input.agentId, input.caseId, grantOk ? grant : undefined) : undefined;
   const snapshot = { tier: agent?.tier ?? '-', autoApproveUpTo: auth?.tier.autoApproveUpTo ?? 0, remaining: auth?.remaining ?? 0 };
 
   const finish = (outcome: Outcome, reasonCode: string, reason: string, ruleId?: string, approvalsRequired?: 0 | 1 | 2,
@@ -43,6 +44,7 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
       requestId: request.id, outcome, reasonCode, reason, ruleId, ruleTrace: trace, approvalsRequired, linkedRequestIds,
       policyVersion: policy.metadata.version, evaluatedAt: ts, calmControl: CALM_CONTROL, limitsSnapshot: snapshot,
     };
+    if (grant && grantOk) grant.spent = grantSpent(ctx, grant.id);
     request.status = outcome === 'approve' ? 'approved' : outcome === 'deny' ? 'denied' : 'pending';
     store.requests.set(request.id, request);
     store.decisions.set(request.id, decision);
@@ -58,22 +60,32 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
   if (priced === null) return deny('UNKNOWN_SERVICE', `"${input.service}" is not a priced service in the policy.`);
 
   // 1 suspended
-  if (store.suspended(input.agentId)) {
-    step('SG-07', 'fail', 'agent suspended');
-    return deny('AGENT_SUSPENDED', `${input.agentId} is frozen by the kill switch. Only a human can resume it.`, 'SG-07');
+  const frozen = [input.agentId, grant?.rootAgentId, grant?.parentAgentId].find((a) => a && store.suspended(a));
+  if (frozen) {
+    step('SG-07', 'fail', `${frozen} suspended`);
+    return deny('AGENT_SUSPENDED', frozen === input.agentId ? `${frozen} is frozen by the kill switch. Only a human can resume it.`
+      : `${frozen} is frozen by the kill switch, so the authority it delegated to ${input.agentId} is frozen too.`, 'SG-07');
   }
   step('SG-07', 'pass', 'agent active');
 
-  // 2 delegation (grants arrive in task 2.3: any delegationId is unknown for now)
+  // 2 delegation must be a live grant to this agent for this case
   if (input.delegationId) {
-    step('SG-06', 'fail', `delegation ${input.delegationId} not found`);
-    return deny('DELEGATION_INVALID', `Delegation "${input.delegationId}" is not valid.`, 'SG-06');
-  }
-  step('SG-06', 'skip', 'no delegation');
+    if (!grantOk) {
+      const why = !grant ? 'not found' : grant.status !== 'active' ? grant.status
+        : grant.childAgentId !== input.agentId ? 'issued to another agent' : 'issued for another case';
+      step('SG-06', 'fail', `delegation ${input.delegationId} ${why}`);
+      return deny('DELEGATION_INVALID', `Delegation "${input.delegationId}" is not valid (${why}).`, 'SG-06');
+    }
+    step('SG-06', 'pass', `${input.delegationId} from ${grant!.parentAgentId}`);
+  } else step('SG-06', 'skip', 'no delegation');
 
   // 3 service allow-list
   if (enabled('SG-01')) {
-    if (!matchesAny(agent.allowedServices, input.service)) {
+    if (!auth.allows(input.service) && grantOk && auth.childAllows(input.service)) {
+      step('SG-06', 'fail', `${input.service} not covered by ${input.delegationId}`);
+      return deny('DELEGATION_SCOPE', `${input.agentId} may buy "${input.service}" on its own authority, but not on ${grant!.parentAgentId}'s: the delegation does not cover it.`, 'SG-06');
+    }
+    if (!auth.allows(input.service)) {
       step('SG-01', 'fail', `${input.service} not in allow-list`);
       return deny('SERVICE_NOT_ALLOWED', `${input.agentId} is not permitted to buy "${input.service}" (outside its allowed services).`, 'SG-01');
     }
@@ -125,6 +137,10 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
   // 6 budgets
   if (enabled('SG-02')) {
     if (request.amount > auth.remaining) {
+      if (auth.grantRemaining !== undefined && auth.grantRemaining <= Math.min(auth.caseRemaining, auth.dayRemaining)) {
+        step('SG-06', 'fail', `${usd(request.amount)} > ${usd(auth.grantRemaining)} left in ${input.delegationId}`);
+        return deny('GRANT_EXCEEDED', `Would exceed the ${usd(grant!.amount)} delegated by ${grant!.parentAgentId}: ${usd(request.amount)} requested, ${usd(Math.max(auth.grantRemaining, 0))} left.`, 'SG-06');
+      }
       const caseBinds = auth.caseRemaining <= auth.dayRemaining;
       step('SG-02', 'fail', `${usd(request.amount)} > ${usd(auth.remaining)} remaining`);
       return deny(caseBinds ? 'CASE_BUDGET' : 'DAY_BUDGET',
@@ -205,7 +221,7 @@ export function recordSpan(ctx: Ctx, r: SpendRequest, d: Decision) {
     'spendguard.case_id': r.caseId, 'spendguard.service': r.service, 'spendguard.amount': round4(r.amount),
     'spendguard.currency': r.currency, 'spendguard.decision': d.outcome, 'spendguard.reason_code': d.reasonCode,
     'spendguard.rule_id': d.ruleId, 'spendguard.source': r.source,
-    'spendguard.delegation.parent_agent_id': undefined, 'spendguard.delegation.root_agent_id': r.rootAgentId,
+    'spendguard.delegation.parent_agent_id': r.delegationId ? ctx.store.delegations.get(r.delegationId)?.parentAgentId : undefined, 'spendguard.delegation.root_agent_id': r.rootAgentId,
     'spendguard.policy.version': d.policyVersion,
     'aigf.risk_ids': refs.aigfRisks.join(','), 'aigf.mitigation_ids': mitigations.join(','),
     'ccc.control_id': refs.cccControl, 'calm.node_id': 'agent-spend-guard', 'calm.control_id': 'agent-spend-authority',

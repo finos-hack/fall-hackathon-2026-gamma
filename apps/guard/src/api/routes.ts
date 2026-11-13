@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { HttpError } from '../types.js';
+import { createGrant, actOnGrant } from '../engine/delegation.js';
+import { grantSpent, grantStatus } from '../engine/authority.js';
 import { approve, reject, resumeAgent, sweepExpired } from '../engine/approvals.js';
 import { spentOnCase, spentToday, type Ctx } from '../engine/authority.js';
 import { evaluate } from '../engine/evaluate.js';
@@ -13,6 +15,11 @@ const SpendBody = z.object({
   inputTokens: z.number().min(0).optional(), outputTokens: z.number().min(0).optional(), promptHash: z.string().optional(),
   quantity: z.number().positive().optional(), params: z.record(z.string(), z.unknown()).optional(),
   purpose: z.string().optional(), source: z.enum(['scripted', 'live-llm', 'fluxnova']).optional(),
+});
+const GrantBody = z.object({
+  parentAgentId: z.string().min(1), childAgentId: z.string().min(1), caseId: z.string().min(1),
+  amount: z.number().min(0), services: z.array(z.string().min(1)).min(1),
+  ttlMinutes: z.number().positive().optional(), parentDelegationId: z.string().optional(),
 });
 const ActBody = z.object({ approverId: z.string().min(1), comment: z.string().optional() });
 
@@ -41,6 +48,17 @@ export function registerRoutes(app: FastifyInstance, ctx: Ctx, bus: Bus, policyP
     const { request, decision } = evaluate(ctx, SpendBody.parse(req.body));
     return { requestId: request.id, status: request.status, decision };
   });
+  app.post('/api/delegations', async (req) => {
+    const r = createGrant(ctx, GrantBody.parse(req.body));
+    return { delegationId: r.delegation.id, status: r.delegation.status, ...r };
+  });
+  for (const name of ['approve', 'reject'] as const) {
+    app.post(`/api/delegations/:id/${name}`, async (req) => {
+      const body = ActBody.parse(req.body);
+      const d = actOnGrant(ctx, (req.params as { id: string }).id, body.approverId, name, body.comment);
+      return { delegationId: d.id, status: d.status, delegation: d };
+    });
+  }
   app.get('/api/requests/:id', async (req) => {
     sweepExpired(ctx);
     return view((req.params as { id: string }).id);
@@ -69,6 +87,7 @@ export function registerRoutes(app: FastifyInstance, ctx: Ctx, bus: Bus, policyP
         caseId, byAgent: Object.keys(ctx.policy.agents)
           .map((agentId) => ({ agentId, spent: spentOnCase(ctx, caseId, agentId) })).filter((x) => x.spent > 0),
       })),
+      delegations: [...ctx.store.delegations.values()].map((d) => { grantStatus(ctx, d); return { ...d, spent: grantSpent(ctx, d.id) }; }),
       queue: all.filter((r) => r.status === 'pending').map((r) => view(r.id)),
       requests: all.slice(-200).map((r) => view(r.id)),
     };

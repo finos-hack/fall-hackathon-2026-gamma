@@ -31,6 +31,9 @@ export interface Delegation {
   id: string; parentAgentId: string; childAgentId: string; rootAgentId: string; caseId: string;
   amount: number; spent: number; services: string[]; depth: number;
   status: 'active' | 'pending' | 'denied' | 'expired'; createdAt: string; expiresAt: string;
+  parentDelegationId?: string;
+  /** Roles that may approve a pending grant (parent's effective tier). */
+  approverRoles?: string[];
 }
 export interface AgentState {
   agentId: string; suspended: boolean; suspendedReason?: string; projectedHourlyBurn?: number;

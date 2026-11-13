@@ -2,12 +2,20 @@ export interface Req {
   id: string; ts: string; caseId: string; agentId: string; rootAgentId: string; delegationId?: string;
   kind: 'llm' | 'service'; service: string; amount: number; purpose: string;
   source?: string; status: 'approved' | 'denied' | 'pending' | 'rejected' | 'expired';
-  inputTokens?: number; outputTokens?: number;
+  inputTokens?: number; outputTokens?: number; traceId?: string;
 }
 export interface Dec {
   outcome: 'approve' | 'deny' | 'escalate'; reasonCode: string; reason: string; ruleId?: string;
   linkedRequestIds?: string[]; approvalsRequired?: number;
+  ruleTrace?: { ruleId: string; result: 'pass' | 'fail' | 'skip'; detail?: string }[];
+  limitsSnapshot?: { tier: string; autoApproveUpTo: number; remaining: number };
+  calmControl?: string; policyVersion?: string;
 }
+export interface Delegation {
+  id: string; parentAgentId: string; childAgentId: string; rootAgentId: string; caseId: string;
+  amount: number; spent: number; services: string[]; depth: number; status: string; expiresAt: string;
+}
+export interface AuditEntry { seq: number; ts: string; type: string; actor: string; payload: Record<string, unknown>; hash: string }
 export interface Appr { approverId: string; role: string; action: 'approve' | 'reject'; comment?: string }
 export interface Row { request: Req; decision?: Dec; approvals: Appr[] }
 export interface AgentInfo {
@@ -16,9 +24,11 @@ export interface AgentInfo {
 }
 export interface State {
   policy: { name: string; version: string }; agents: AgentInfo[]; queue: Row[]; requests: Row[];
+  delegations: Delegation[];
   cases: { caseId: string; byAgent: { agentId: string; spent: number }[] }[];
 }
-export interface Policy { approvers: { id: string; name: string; role: string }[] }
+export interface Control { id: string; name: string; enabled: boolean; action: string; ccc?: string; aigf: { risks: string[]; mitigations: string[] }; rationale: string }
+export interface Policy { approvers: { id: string; name: string; role: string }[]; controls?: Control[] }
 
 export async function call<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {

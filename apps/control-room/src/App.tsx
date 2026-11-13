@@ -4,10 +4,16 @@ import { useGuard } from './useGuard';
 import { Header, SuspensionBanner, Toasts } from './components/Header';
 import { SpendFeed } from './components/SpendFeed';
 import { ApprovalQueue } from './components/ApprovalQueue';
+import { KpiStrip } from './components/Kpi';
+import { CaseBudgets } from './components/CaseBudgets';
+import { RequestDrawer } from './components/RequestDrawer';
+import { AgentsPanel, AuditLog, PolicyViewer } from './components/Tabs';
 
 export default function App() {
   const { state, policy, online, refresh } = useGuard();
   const [actor, setActor] = useState('sofia');
+  const [tab, setTab] = useState<'audit' | 'agents' | 'policy'>('audit');
+  const [selected, setSelected] = useState<string | null>(null);
   const [showDemo, setShowDemo] = useState(true);
   const [toasts, setToasts] = useState<{ id: number; text: string; bad: boolean }[]>([]);
 
@@ -39,29 +45,31 @@ export default function App() {
         onRun={(id) => act(() => call('POST', `/scenarios/${id}/run`), `Scenario ${id} started`)}
         onReset={() => act(() => call('POST', '/reset'), 'Guard reset')}
       />
+      <KpiStrip state={state} />
       <main className="mx-auto grid max-w-[1440px] grid-cols-1 gap-4 p-4 lg:grid-cols-[1fr_380px]">
-        <SpendFeed rows={rows} />
+        <SpendFeed rows={rows} onSelect={setSelected} />
         <div className="space-y-4">
           <ApprovalQueue
             queue={state?.queue ?? []} byId={byId}
             onApprove={(id) => act(() => call('POST', `/requests/${id}/approve`, { approverId: actor }), 'Approval recorded')}
             onReject={(id) => act(() => call('POST', `/requests/${id}/reject`, { approverId: actor, comment: 'Rejected in control room' }), 'Request rejected')}
           />
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-2 text-sm font-semibold text-slate-700">Agents</h2>
-            <ul className="space-y-1 text-sm">
-              {(state?.agents ?? []).map((a) => (
-                <li key={a.agentId} className="flex justify-between tabular-nums">
-                  <span>{a.agentId} <span className="text-slate-400">({a.tier})</span></span>
-                  <span className={a.suspended ? 'font-medium text-red-700' : 'text-slate-600'}>
-                    {a.suspended ? 'frozen' : `${money(a.spentToday)} / ${money(a.budgets.perDay)} today`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <CaseBudgets state={state} />
         </div>
       </main>
+      <section className="mx-auto mb-6 max-w-[1440px] px-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex gap-4 border-b border-slate-200 text-sm">
+            {([['audit', 'Audit log & evidence'], ['agents', 'Agents & delegations'], ['policy', 'Policy']] as const).map(([k, l]) => (
+              <button key={k} onClick={() => setTab(k)} className={`-mb-px border-b-2 pb-2 ${tab === k ? 'border-indigo-600 font-medium text-indigo-700' : 'border-transparent text-slate-500'}`}>{l}</button>
+            ))}
+          </div>
+          {tab === 'audit' && <AuditLog state={state} />}
+          {tab === 'agents' && <AgentsPanel state={state} onResume={(id) => act(() => call('POST', `/agents/${id}/resume`, { approverId: actor }), `${id} resumed`)} />}
+          {tab === 'policy' && <PolicyViewer controls={policy?.controls ?? []} />}
+        </div>
+      </section>
+      <RequestDrawer row={selected ? byId.get(selected) : undefined} controls={policy?.controls ?? []} onClose={() => setSelected(null)} />
       <Toasts toasts={toasts} />
     </div>
   );

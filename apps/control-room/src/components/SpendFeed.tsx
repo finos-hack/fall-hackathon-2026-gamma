@@ -19,7 +19,7 @@ export function DecisionBadge({ status, escalated }: { status: Row['request']['s
   );
 }
 
-export function SpendFeed({ rows }: { rows: Row[] }) {
+export function SpendFeed({ rows, onSelect }: { rows: Row[]; onSelect: (id: string) => void }) {
   const list = [...rows].reverse();
   return (
     <section className="rounded-lg border border-slate-200 bg-white">
@@ -27,7 +27,7 @@ export function SpendFeed({ rows }: { rows: Row[] }) {
       {list.length === 0 && <p className="p-6 text-sm text-slate-500">No spend yet. Start a scenario from the Demo menu.</p>}
       <ul className="divide-y divide-slate-100">
         {list.map(({ request: r, decision: d }) => (
-          <li key={r.id} className="feed-row flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
+          <li key={r.id} onClick={() => onSelect(r.id)} className="feed-row flex cursor-pointer hover:bg-slate-50 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
             <span className="w-16 tabular-nums text-slate-400">{new Date(r.ts).toLocaleTimeString([], { hour12: false })}</span>
             <span className="font-medium">{r.agentId}</span>
             {r.rootAgentId !== r.agentId && (

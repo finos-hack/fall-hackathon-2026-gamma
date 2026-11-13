@@ -48,7 +48,7 @@
 
 **Out of scope.** Real payments or payment rails (AP2, x402, card networks own that; we are not a payments product), real multi-agent orchestration (agents are scripted functions), real vendors (fixed mock prices), auth/SSO (an "acting as" switcher stands in).
 
-**Demo story (3 min) → scenarios S1–S5 (§3.7)**
+**Demo story (3 min) → scenarios S1–S5 (§3.8)**
 1. Open in the bank's language: "Banks already decide who can spend how much. AI agents have no such rules yet."
 2. **S1 Normal loan case.** Small spends, all auto-approved.
 3. **S2 High-value case.** A $28 credit report needs four-eyes. Sofia and Marco approve in the control room.
@@ -465,7 +465,7 @@ Mirror the format of an existing risk file in `finos/ai-governance-framework` (f
 Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one fresh session. Tick boxes as you go.
 
 ### Day 1 — Fri 13 Nov (half day)
-- [ ] **1.1 Repo setup + scaffold** (Sonnet). Steps: clone `finos-hack/fall-hackathon-2026-gamma` → rename remote `origin` to `hackathon` → Pardis creates an empty **private** GitHub repo → add it as `origin` → `git push -u origin main`. Set `git config user.name/user.email` to match Pardis's GitHub account. Commit `README.md` title "Agent Spend Guard" + "Hackathon Track: AI Governance / Steel Thread" with `-s` → push to `origin` **and** `hackathon` (access test). Add CLAUDE.md, npm workspaces, Fastify `/api/health`, Vite + Tailwind hello page, Vitest, `.gitignore` (`data/`, `.env`, `node_modules`), `check:dco` script. **DoD:** `npm run dev` shows the page calling `/api/health`; `npm test` is green; test push visible on the hackathon repo; `check:dco` clean.
+- [x] **1.1 Repo setup + scaffold** (Sonnet). Steps: clone `finos-hack/fall-hackathon-2026-gamma` → rename remote `origin` to `hackathon` → Pardis creates an empty **private** GitHub repo → add it as `origin` → `git push -u origin main`. Set `git config user.name/user.email` to match Pardis's GitHub account. Commit `README.md` title "Agent Spend Guard" + "Hackathon Track: AI Governance / Steel Thread" with `-s` → push to `origin` **and** `hackathon` (access test). Add CLAUDE.md, npm workspaces, Fastify `/api/health`, Vite + Tailwind hello page, Vitest, `.gitignore` (`data/`, `.env`, `node_modules`), `check:dco` script. **DoD:** `npm run dev` shows the page calling `/api/health`; `npm test` is green; test push visible on the hackathon repo; `check:dco` clean.
 - [ ] **1.2 Policy model** (Sonnet). zod schema, YAML loader with cross-checks (§2.1), the demo policy (§2.2), pricing calc, glob matcher, `gen:schema`, `GET /api/policy`. **DoD:** policy loads; 4 validation tests (bad tier ref, bad threshold order, unknown control type, pricing maths) pass.
 
 ### Day 2 — Sat 14 Nov (engine)

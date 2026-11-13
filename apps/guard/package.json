@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:schema": "tsx scripts-gen-schema.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",

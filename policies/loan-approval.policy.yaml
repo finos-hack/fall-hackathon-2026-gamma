@@ -1,0 +1,123 @@
+apiVersion: spendguard.finos.org/v1alpha1
+kind: SpendPolicy
+metadata:
+  name: loan-approval-agent-spend
+  version: 1.0.0
+  owner: Head of AI Platform
+  approvedBy: AI Model Risk Committee
+  effectiveFrom: 2026-11-13
+  currency: USD
+
+pricing:                                   # mocked, fixed
+  llm:
+    llm.standard: { inputPer1kTokens: 0.003, outputPer1kTokens: 0.015 }
+    llm.premium:  { inputPer1kTokens: 0.015, outputPer1kTokens: 0.075 }
+  services:
+    kyc.id-verify:             { unitPrice: 1.20,  vendor: MockKYC }
+    credit-bureau.score-pull:  { unitPrice: 2.50,  vendor: MockBureau }
+    credit-bureau.full-report: { unitPrice: 28.00, vendor: MockBureau }
+    property.valuation:        { unitPrice: 1.50,  vendor: MockValuations }
+    fraud-check.basic:         { unitPrice: 0.75,  vendor: MockFraud }
+    fraud-check.enhanced:      { unitPrice: 4.00,  vendor: MockFraud }
+
+authorityTiers:                            # Delegation-of-Authority matrix
+  T1:
+    label: Helper agent (like a junior analyst)
+    autoApproveUpTo: 1.00                  # signing limit
+    escalateUpTo: 5.00                     # above this: outside delegated authority -> deny
+    fourEyesAbove: null
+    approverRoles: [compliance-officer]
+  T2:
+    label: Lead agent (like a loan officer)
+    autoApproveUpTo: 5.00
+    escalateUpTo: 50.00
+    fourEyesAbove: 25.00                   # two distinct approvers
+    approverRoles: [compliance-officer, head-of-lending]
+
+agents:
+  loan-agent:
+    description: Loan underwriting agent (FINOS Steel Thread loan approval)
+    tier: T2
+    budgets: { perCase: 40.00, perDay: 300.00 }
+    allowedServices: ["llm.*", "kyc.id-verify", "credit-bureau.*", "property.valuation", "fraud-check.basic"]
+    canDelegateTo: [fraud-agent]
+  fraud-agent:
+    description: Fraud-check helper agent
+    tier: T1
+    budgets: { perCase: 10.00, perDay: 100.00 }
+    allowedServices: ["llm.*", "fraud-check.basic", "fraud-check.enhanced"]
+    canDelegateTo: []
+
+approvers:
+  - { id: sofia, name: Sofia R., role: compliance-officer }
+  - { id: marco, name: Marco B., role: head-of-lending }
+
+delegation: { maxDepth: 1, defaultTtlMinutes: 30 }
+
+controls:
+  - id: SG-01
+    name: Service allow-list (merchant restriction)
+    type: service_allowlist
+    enabled: true
+    action: deny
+    aigf: { risks: [AIR-SEC-024, AIR-OP-018], mitigations: [AIR-PREV-018] }
+    rationale: Agents may only buy services their role needs, like card merchant-category limits.
+  - id: SG-02
+    name: Case and daily budgets (cost centre)
+    type: budget
+    enabled: true
+    action: deny
+    aigf: { risks: [AIR-OP-018, PROPOSED-AIR-OP-SPEND], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    rationale: Hard caps per loan case and per agent per day. Pending approvals reserve budget.
+  - id: SG-03
+    name: Delegation-of-authority thresholds (signing limits)
+    type: doa_threshold
+    enabled: true
+    action: escalate
+    aigf: { risks: [AIR-SEC-024], mitigations: [AIR-PREV-018, PROPOSED-AIR-PREV-SPEND] }
+    rationale: Above the signing limit a human approves. Above the tier ceiling the request is outside delegated authority (deny).
+  - id: SG-04
+    name: Four-eyes principle
+    type: four_eyes
+    enabled: true
+    action: escalate
+    aigf: { risks: [AIR-SEC-024], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    rationale: High-value spend needs two distinct approvers.
+  - id: SG-05
+    name: Split-purchase (structuring) detection
+    type: structuring
+    enabled: true
+    action: escalate
+    params: { windowMinutes: 10, minParts: 3, nearThresholdRatio: 0.5 }
+    aigf: { risks: [AIR-SEC-024, PROPOSED-AIR-OP-SPEND], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    rationale: Borrowed from AML. Several near-threshold buys of the same service that together exceed the signing limit are escalated.
+  - id: SG-06
+    name: Delegation attenuation (no authority amplification)
+    type: delegation
+    enabled: true
+    action: deny
+    aigf: { risks: [AIR-OP-028, AIR-SEC-024], mitigations: [AIR-PREV-022, AIR-PREV-018] }
+    rationale: A helper never gets more authority than its parent, and spends from the parent's budget (shared, not doubled).
+  - id: SG-07
+    name: Runaway agent circuit breaker (kill switch)
+    type: runaway
+    enabled: true
+    action: deny_and_suspend
+    params: { windowSeconds: 60, maxIdenticalRequests: 5, maxRequestsPerMinute: 30 }
+    aigf: { risks: [AIR-OP-006, PROPOSED-AIR-OP-SPEND], mitigations: [AIR-DET-004] }
+    rationale: Looping agents are frozen like a blocked card. Only a human can resume them.
+  - id: SG-08
+    name: Duplicate purchase
+    type: duplicate
+    enabled: true
+    action: deny
+    params: { windowSeconds: 60 }
+    aigf: { risks: [AIR-OP-006], mitigations: [AIR-DET-004] }
+    rationale: The same paid check with the same parameters twice within a minute is denied.
+  - id: SG-09
+    name: Tamper-evident audit trail
+    type: audit
+    enabled: true
+    action: approve
+    aigf: { risks: [AIR-SEC-024], mitigations: [AIR-DET-021, AIR-DET-004] }
+    rationale: Every request, decision and approval goes to a hash-chained, exportable log.

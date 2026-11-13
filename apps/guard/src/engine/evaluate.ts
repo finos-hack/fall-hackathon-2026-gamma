@@ -79,8 +79,34 @@ export function evaluate(ctx: Ctx, input: SpendInput): { request: SpendRequest; 
     step('SG-01', 'pass');
   } else step('SG-01', 'skip', 'disabled');
 
-  // 4 runaway (task 2.2)
-  step('SG-07', 'skip', 'runaway check not enabled yet');
+  // 4 runaway circuit breaker (requests before the last resume are ignored)
+  if (enabled('SG-07')) {
+    const p = control('SG-07')?.params ?? {};
+    const maxSame = Number(p.maxIdenticalRequests ?? 5);
+    const maxPerMin = Number(p.maxRequestsPerMinute ?? 30);
+    const windowMs = Number(p.windowSeconds ?? 60) * 1000;
+    const nowMs = Date.parse(ts);
+    const resumedAt = store.agents.get(input.agentId)?.resumedAtSeq ?? 0;
+    const mine = [...store.requests.values()].filter((r) => r.agentId === input.agentId && Number(r.id.slice(4)) > resumedAt);
+    const lastMinute = mine.filter((r) => Date.parse(r.ts) >= nowMs - 60_000);
+    const identical = mine.filter((r) => Date.parse(r.ts) >= nowMs - windowMs && r.service === input.service &&
+      (input.kind === 'llm' ? input.promptHash !== undefined && r.promptHash === input.promptHash : r.paramsHash === request.paramsHash));
+    if (identical.length >= maxSame || lastMinute.length >= maxPerMin) {
+      const why = identical.length >= maxSame
+        ? `${identical.length} identical requests in ${windowMs / 1000}s` : `${lastMinute.length} requests in the last minute`;
+      const burn = round4(lastMinute.filter((r) => r.status === 'approved' || r.status === 'pending')
+        .reduce((s, r) => s + r.amount, 0) * 60);
+      step('SG-07', 'fail', why);
+      const state = { agentId: input.agentId, suspended: true, suspendedReason: why, projectedHourlyBurn: burn,
+        resumedAtSeq: store.agents.get(input.agentId)?.resumedAtSeq };
+      store.agents.set(input.agentId, state);
+      ctx.audit.append('AGENT_SUSPENDED', 'spend-guard', { agentId: input.agentId, caseId: input.caseId, reason: why, projectedHourlyBurn: burn,
+        ruleId: 'SG-07', requestId: request.id }, ts);
+      ctx.emit('agent', state);
+      return deny('RUNAWAY', `${input.agentId} looks like a runaway loop (${why}, projected ${usd(burn)}/hour) and has been frozen. Only a human can resume it.`, 'SG-07');
+    }
+    step('SG-07', 'pass', `${identical.length} identical, ${lastMinute.length}/min`);
+  } else step('SG-07', 'skip', 'disabled');
 
   // 5 duplicate (service kind only)
   if (input.kind === 'service' && enabled('SG-08')) {

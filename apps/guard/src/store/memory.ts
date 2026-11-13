@@ -5,7 +5,7 @@ export class MemoryStore {
   decisions = new Map<string, Decision>();
   approvals: Approval[] = [];
   agents = new Map<string, AgentState>();
-  private seq = 0;
+  seq = 0;
 
   nextId() { return `req-${String(++this.seq).padStart(4, '0')}`; }
   approvalsFor(requestId: string) { return this.approvals.filter((a) => a.requestId === requestId); }

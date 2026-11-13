@@ -32,7 +32,11 @@ export interface Delegation {
   amount: number; spent: number; services: string[]; depth: number;
   status: 'active' | 'pending' | 'denied' | 'expired'; createdAt: string; expiresAt: string;
 }
-export interface AgentState { agentId: string; suspended: boolean; suspendedReason?: string; projectedHourlyBurn?: number }
+export interface AgentState {
+  agentId: string; suspended: boolean; suspendedReason?: string; projectedHourlyBurn?: number;
+  /** Store sequence at the last resume: runaway counting ignores requests up to this point. */
+  resumedAtSeq?: number;
+}
 export type AuditType =
   | 'POLICY_LOADED' | 'CALM_BINDING_VERIFIED' | 'SPEND_REQUESTED' | 'DECISION' | 'APPROVAL_GIVEN'
   | 'APPROVAL_REJECTED' | 'REQUEST_EXPIRED' | 'STRUCTURING_LINKED' | 'DELEGATION_GRANTED'

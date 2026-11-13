@@ -65,7 +65,7 @@ export const reject = (ctx: Ctx, id: string, approverId: string, comment?: strin
 export function resumeAgent(ctx: Ctx, agentId: string, approverId: string) {
   if (!ctx.policy.agents[agentId]) throw new HttpError(404, 'UNKNOWN_AGENT', `Unknown agent "${agentId}"`);
   if (!ctx.policy.approvers.some((a) => a.id === approverId)) throw new HttpError(403, 'UNKNOWN_APPROVER', `Unknown approver "${approverId}"`);
-  const state = { agentId, suspended: false };
+  const state = { agentId, suspended: false, resumedAtSeq: ctx.store.seq };
   ctx.store.agents.set(agentId, state);
   ctx.audit.append('AGENT_RESUMED', approverId, { agentId, approver: approverId }, ctx.clock.now().toISOString());
   ctx.emit('agent', state);

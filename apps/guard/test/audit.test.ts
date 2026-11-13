@@ -14,6 +14,11 @@ describe('audit trail (SG-09)', () => {
     const lines = csv.trim().split('\n');
     expect(lines[0]).toBe('seq,ts,type,actor,caseId,agentId,onBehalfOf,service,amount,outcome,ruleId,reason,approver,aigfRisks,cccControl,calmControl,source,traceId,hash');
     expect(lines).toHaveLength(6);
+    const cols = lines[0].split(',');
+    const decisionRow = lines[3].split(',');
+    expect(decisionRow[cols.indexOf('calmControl')]).toBe('agent-spend-guard#agent-spend-authority');
+    expect(decisionRow[cols.indexOf('source')]).toBe('scripted');
+    expect(decisionRow[cols.indexOf('cccControl')]).toBe(''); // filled in task 4.1
 
     (ctx.audit.entries[2].payload as Record<string, unknown>).amount = 0.0001;
     const broken = (await call('GET', '/api/audit/verify')).body;

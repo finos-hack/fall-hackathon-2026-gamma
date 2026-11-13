@@ -1,6 +1,6 @@
-# {project name}
+# Agent Spend Guard
 
-**Hackathon Track:** {track name/number}
+**Hackathon Track:** AI Governance / Steel Thread
 
 Short blurb about what your project does.
 

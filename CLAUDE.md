@@ -324,7 +324,7 @@ Scripted in `apps/guard/src/agents/scenarios.ts`; each run starts from a fresh c
 - **Optional, Tue:** `Dockerfile` + `docker-compose.yml` (one service), to match the FINOS demo's style.
 
 **API (all JSON, base `/api`)**
-`POST /spend` · `GET /requests/:id` · `POST /requests/:id/approve` · `POST /requests/:id/reject` · `POST /delegations` · `POST /delegations/:id/approve|reject` (pending grant, D5: single approval, approver role must be in the parent's effective `tier.approverRoles`) · `POST /agents/:id/resume` · `GET /state` (agents, budgets, cases, queue, last 200 requests) · `GET /audit?format=json|csv` · `GET /audit/verify` · `GET /evidence/:caseId?format=json|md` (§7.0) · `GET /finos/status` (§7.0) · `GET /policy` · `POST /policy/reload` · `GET /stream` (SSE) · `POST /scenarios/:id/run` (S1–S5, `?live=1` for §7.6) · `POST /reset` · `GET /traces` · *(stretch)* `GET /metrics` (Prometheus text).
+`POST /spend` · `GET /requests/:id` · `POST /requests/:id/approve` · `POST /requests/:id/reject` · `POST /delegations` · `POST /delegations/:id/approve|reject` (pending grant, D5: single approval, approver role must be in the parent's effective `tier.approverRoles`) · `POST /agents/:id/resume` · `GET /state` (agents, budgets, cases, queue, last 200 requests) · `GET /audit?format=json|csv` · `GET /audit/verify` · `GET /evidence/:caseId?format=json|md` (§7.0) · `GET /finos/status` (§7.0) · `GET /policy` · `POST /policy/reload` · `GET /stream` (SSE) · `POST /scenarios/:id/run` (S1–S5, `?live=1` for §7.6) · `GET /scenarios/runs/:runId` (run status + steps) · `POST /reset` · `GET /traces` · *(stretch)* `GET /metrics` (Prometheus text).
 
 **Folder structure (fits the hackathon template; template files stay at the root)**
 ```
@@ -515,7 +515,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 
 ### Day 3 — Sun 15 Nov (demo + UI)
 - [x] **3.1 Scripted agents + scenario runner + SSE** (Sonnet). `client.ts` calls the HTTP API; S1–S5 runnable via `POST /api/scenarios/:id/run`; `/reset`; SSE events. **DoD:** with `curl` you can run each scenario and watch events stream; scenarios wait for human approvals.
-- [ ] **3.2 Control room part 1** (Sonnet). Layout, header (acting-as, demo menu, reset, FINOS badge placeholder), live feed, approval queue with four-eyes and linked parts, suspension banner + resume. **DoD:** S1–S5 can be demoed end to end in the browser.
+- [x] **3.2 Control room part 1** (Sonnet). Layout, header (acting-as, demo menu, reset, FINOS badge placeholder), live feed, approval queue with four-eyes and linked parts, suspension banner + resume. **DoD:** S1–S5 can be demoed end to end in the browser.
 - [ ] **3.3 Control room part 2** (Sonnet). KPI strip, case budget bars (burn-down only if quick), request drawer (rule trace, AIGF, CCC, CALM refs), audit tab with export + chain badge, agents & delegations tab. Policy tab only if time is left. **DoD:** the full 3-minute demo runs without touching the terminal; Pardis is happy with the look.
 
 ### Day 4 — Mon 16 Nov (FINOS pipeline + story)

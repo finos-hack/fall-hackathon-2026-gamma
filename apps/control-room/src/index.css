@@ -1,1 +1,4 @@
 @import "tailwindcss";
+
+@keyframes flash { from { background: #e0e7ff; } to { background: transparent; } }
+.feed-row:first-child { animation: flash 1s ease-out; }

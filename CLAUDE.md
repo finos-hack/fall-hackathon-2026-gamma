@@ -509,7 +509,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 - [x] **1.2 Policy model** (Sonnet). zod schema (incl. optional `ccc` field), YAML loader with cross-checks (§2.1), the demo policy (§2.2), pricing calc, glob matcher, `gen:schema`, `GET /api/policy`. **DoD:** policy loads; 4 validation tests (bad tier ref, bad threshold order, unknown control type, pricing maths) pass.
 
 ### Day 2 — Sat 14 Nov (engine)
-- [ ] **2.1 Guard core** (Sonnet). types, store, clock, `evaluate` steps 0–3 and 5–7 + 9, approvals (incl. four-eyes, expiry), hash-chained audit + verify + CSV, trace spans to JSONL, all endpoints except scenarios/evidence/finos. **DoD:** S1 and S2 pass as tests; extra tests for budget/duplicate/four-eyes/audit tamper pass.
+- [x] **2.1 Guard core** (Sonnet). types, store, clock, `evaluate` steps 0–3 and 5–7 + 9, approvals (incl. four-eyes, expiry), hash-chained audit + verify + CSV, trace spans to JSONL, all endpoints except scenarios/evidence/finos. **DoD:** S1 and S2 pass as tests; extra tests for budget/duplicate/four-eyes/audit tamper pass.
 - [ ] **2.2 Structuring + runaway** (Sonnet → Opus if stuck; explain first). SG-05, SG-07, suspension and resume. **DoD:** S3 and S5 tests + the structuring edge tests pass.
 - [ ] **2.3 Delegation** (Sonnet → Opus if stuck; explain first). Grant creation D1–D5, authority context, shared debits. **DoD:** S4 test + delegation edge tests pass; all tests green.
 
@@ -599,3 +599,7 @@ Use the rubric's own words in the README and pitch: "multiple FINOS projects wor
 - Policy zod schema has the optional `ccc` field on controls; the YAML has no `ccc` values yet (task 4.1).
 - Dev UI: Vite on 5173 proxies `/api` to `localhost:8080`; with `PORT=8088` the proxy target in `apps/control-room/vite.config.ts` must be changed too.
 - Not run in this session: `npm run dev` in a browser (the 1.1 DoD "page calls /api/health" rests on code + health test).
+- Task 2.1 done. `buildApp({clock, dataDir, policyPath})`: no `dataDir` = in-memory (tests); `server.ts` writes `data/audit.jsonl` + `data/traces.jsonl`. Tests use `test/helpers.ts` (`mk()` with a `ManualClock`).
+- Engine is `engine/{evaluate,authority,approvals}.ts` (rules are inline in `evaluate.ts`, not in `engine/rules/`). SG-05/SG-07 runaway are `skip` entries in the trace until 2.2; any `delegationId` is DENY `DELEGATION_INVALID` until 2.3 (`authority.ts` has own authority only).
+- Not built in 2.1 (per §8): `/api/scenarios`, `/api/delegations`, `/api/evidence`, `/api/finos/status`, `/metrics`. `POST /api/reset` truncates the audit/trace files (demo only). `resume` is implemented (audit `AGENT_RESUMED`); nothing suspends yet.
+- Errors: `{error, message}` JSON; 404 NOT_FOUND, 403 UNKNOWN_APPROVER/ROLE_NOT_ALLOWED, 409 NOT_PENDING/FOUR_EYES_SAME_APPROVER, 400 BAD_REQUEST.

@@ -1,0 +1,18 @@
+{
+  "name": "agent-spend-guard",
+  "private": true,
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22" },
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently -n guard,ui -c blue,green \"npm run dev -w apps/guard\" \"npm run dev -w apps/control-room\"",
+    "build": "npm run build -w apps/control-room",
+    "test": "npm test -w apps/guard",
+    "gen:schema": "echo \"gen:schema arrives in task 1.2\"",
+    "check:dco": "node scripts/check-dco.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

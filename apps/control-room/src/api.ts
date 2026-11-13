@@ -7,7 +7,7 @@ export interface Req {
 export interface Dec {
   outcome: 'approve' | 'deny' | 'escalate'; reasonCode: string; reason: string; ruleId?: string;
   linkedRequestIds?: string[]; approvalsRequired?: number;
-  ruleTrace?: { ruleId: string; result: 'pass' | 'fail' | 'skip'; detail?: string }[];
+  ruleTrace?: { ruleId: string; result: 'pass' | 'fail' | 'skip'; detail?: string; aigf?: { risks: string[]; mitigations: string[] }; ccc?: string }[];
   limitsSnapshot?: { tier: string; autoApproveUpTo: number; remaining: number };
   calmControl?: string; policyVersion?: string;
 }

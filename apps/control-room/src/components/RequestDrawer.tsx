@@ -8,8 +8,10 @@ const ICON = { pass: [Check, 'text-green-700'], fail: [X, 'text-red-700'], skip:
 export function RequestDrawer({ row, controls, onClose }: { row: Row | undefined; controls: Control[]; onClose: () => void }) {
   if (!row) return null;
   const { request: r, decision: d, approvals } = row;
-  const ctl = new Map(controls.map((c) => [c.id, c]));
-  const rule = d?.ruleId ? ctl.get(d.ruleId) : undefined;
+  const trace = d?.ruleTrace ?? [];
+  const uniq = (xs: string[]) => [...new Set(xs)].join(', ') || '-';
+  const aigfAll = uniq(trace.flatMap((t) => [...(t.aigf?.risks ?? []), ...(t.aigf?.mitigations ?? [])]));
+  const cccAll = uniq(trace.flatMap((t) => (t.ccc ? [t.ccc] : [])));
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/30" onClick={onClose}>
       <aside className="h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -29,21 +31,22 @@ export function RequestDrawer({ row, controls, onClose }: { row: Row | undefined
           <dt className="text-slate-500">Rule / code</dt><dd>{d?.ruleId ?? '-'} · {d?.reasonCode}</dd>
           <dt className="text-slate-500">Limits</dt>
           <dd className="tabular-nums">{d?.limitsSnapshot ? `${d.limitsSnapshot.tier}: signing limit ${money(d.limitsSnapshot.autoApproveUpTo)}, remaining ${money(d.limitsSnapshot.remaining)}` : '-'}</dd>
-          <dt className="text-slate-500">AIGF</dt><dd>{rule ? [...rule.aigf.risks, ...rule.aigf.mitigations].join(', ') : '-'}</dd>
-          <dt className="text-slate-500">CCC</dt><dd>{rule?.ccc ?? '-'}</dd>
+          <dt className="text-slate-500">AIGF</dt><dd>{aigfAll}</dd>
+          <dt className="text-slate-500">CCC</dt><dd>{cccAll}</dd>
           <dt className="text-slate-500">CALM control</dt><dd>{d?.calmControl ?? '-'}</dd>
           <dt className="text-slate-500">Trace ID</dt><dd className="break-all font-mono text-xs">{r.traceId ?? '-'}</dd>
         </dl>
         <h3 className="mb-1 text-sm font-semibold text-slate-700">Rule trace</h3>
         <ul className="mb-4 divide-y divide-slate-100 rounded border border-slate-200 text-sm">
-          {(d?.ruleTrace ?? []).map((t, i) => {
+          {trace.map((t, i) => {
             const [Icon, cls] = ICON[t.result];
             return (
-              <li key={i} className="flex items-start gap-2 px-3 py-1.5">
+              <li key={i} className="flex flex-wrap items-start gap-2 px-3 py-1.5">
                 <Icon size={14} className={`mt-0.5 ${cls}`} />
                 <span className="font-mono text-xs">{t.ruleId}</span>
                 <span className={`text-xs font-medium ${cls}`}>{t.result}</span>
                 <span className="text-xs text-slate-500">{t.detail}</span>
+                {(t.aigf || t.ccc) && <span className="basis-full pl-5 text-[11px] text-slate-400">{[...(t.aigf?.risks ?? []), ...(t.aigf?.mitigations ?? []), t.ccc].filter(Boolean).join(' · ')}</span>}
               </li>
             );
           })}

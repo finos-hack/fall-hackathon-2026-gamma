@@ -514,7 +514,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 - [x] **2.3 Delegation** (Sonnet → Opus if stuck; explain first). Grant creation D1–D5, authority context, shared debits. **DoD:** S4 test + delegation edge tests pass; all tests green.
 
 ### Day 3 — Sun 15 Nov (demo + UI)
-- [ ] **3.1 Scripted agents + scenario runner + SSE** (Sonnet). `client.ts` calls the HTTP API; S1–S5 runnable via `POST /api/scenarios/:id/run`; `/reset`; SSE events. **DoD:** with `curl` you can run each scenario and watch events stream; scenarios wait for human approvals.
+- [x] **3.1 Scripted agents + scenario runner + SSE** (Sonnet). `client.ts` calls the HTTP API; S1–S5 runnable via `POST /api/scenarios/:id/run`; `/reset`; SSE events. **DoD:** with `curl` you can run each scenario and watch events stream; scenarios wait for human approvals.
 - [ ] **3.2 Control room part 1** (Sonnet). Layout, header (acting-as, demo menu, reset, FINOS badge placeholder), live feed, approval queue with four-eyes and linked parts, suspension banner + resume. **DoD:** S1–S5 can be demoed end to end in the browser.
 - [ ] **3.3 Control room part 2** (Sonnet). KPI strip, case budget bars (burn-down only if quick), request drawer (rule trace, AIGF, CCC, CALM refs), audit tab with export + chain badge, agents & delegations tab. Policy tab only if time is left. **DoD:** the full 3-minute demo runs without touching the terminal; Pardis is happy with the look.
 

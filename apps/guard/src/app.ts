@@ -8,6 +8,7 @@ import { AuditLog } from './store/audit.js';
 import { TraceWriter } from './telemetry/trace.js';
 import { Bus } from './api/sse.js';
 import { registerRoutes } from './api/routes.js';
+import { registerScenarioRoutes, type ScenarioEnvOptions } from './api/scenarios.js';
 import type { Ctx } from './engine/authority.js';
 
 export interface AppOptions {
@@ -15,6 +16,8 @@ export interface AppOptions {
   /** Folder for audit.jsonl and traces.jsonl. Omit for a purely in-memory guard (tests). */
   dataDir?: string;
   policyPath?: string;
+  /** Overrides for the scripted-scenario runner (tests: 0 ms narration, fast poll, clock-advancing sleep). */
+  scenarios?: ScenarioEnvOptions;
 }
 
 export async function buildApp(opts: AppOptions = {}) {
@@ -31,6 +34,7 @@ export async function buildApp(opts: AppOptions = {}) {
   };
   audit.append('POLICY_LOADED', 'spend-guard', { policyName: policy.metadata.name, version: policy.metadata.version }, ctx.clock.now().toISOString());
   registerRoutes(app, ctx, bus, opts.policyPath);
+  registerScenarioRoutes(app, bus, opts.scenarios);
   app.get('/api/health', async () => ({ status: 'ok', service: 'agent-spend-guard' }));
   app.decorate('ctx', ctx);
   return app;

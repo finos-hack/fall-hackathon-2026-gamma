@@ -31,6 +31,7 @@ const Control = z.object({
   action: z.enum(['approve', 'deny', 'escalate', 'deny_and_suspend']),
   params: z.record(z.string(), z.unknown()).optional(),
   aigf: z.object({ risks: z.array(z.string()), mitigations: z.array(z.string()) }),
+  ccc: z.string().optional(),
   rationale: z.string(),
 });
 

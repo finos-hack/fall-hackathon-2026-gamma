@@ -27,6 +27,10 @@ describe('policy', () => {
     const o = raw(); o.controls[0].type = 'magic';
     expect(tryParse(o)).toThrow();
   });
+  it('accepts an optional ccc id on controls', () => {
+    const o = raw(); o.controls[0].ccc = 'CCC.AgentSpend.CN01';
+    expect(tryParse(o)).not.toThrow();
+  });
   it('computes prices', () => {
     const p = loadPolicy();
     expect(computeAmount(p, { kind: 'llm', service: 'llm.standard', inputTokens: 3000, outputTokens: 800 })).toBe(0.021);

@@ -312,6 +312,9 @@
             ],
             "additionalProperties": false
           },
+          "ccc": {
+            "type": "string"
+          },
           "rationale": {
             "type": "string"
           }

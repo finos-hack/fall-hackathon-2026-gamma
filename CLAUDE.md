@@ -601,5 +601,5 @@ Use the rubric's own words in the README and pitch: "multiple FINOS projects wor
 - Not run in this session: `npm run dev` in a browser (the 1.1 DoD "page calls /api/health" rests on code + health test).
 - Task 2.1 done. `buildApp({clock, dataDir, policyPath})`: no `dataDir` = in-memory (tests); `server.ts` writes `data/audit.jsonl` + `data/traces.jsonl`. Tests use `test/helpers.ts` (`mk()` with a `ManualClock`).
 - Engine is `engine/{evaluate,authority,approvals}.ts` (rules are inline in `evaluate.ts`, not in `engine/rules/`). SG-05/SG-07 runaway are `skip` entries in the trace until 2.2; any `delegationId` is DENY `DELEGATION_INVALID` until 2.3 (`authority.ts` has own authority only).
-- Not built in 2.1 (per §8): `/api/scenarios`, `/api/delegations`, `/api/evidence`, `/api/finos/status`, `/metrics`. `POST /api/reset` truncates the audit/trace files (demo only). `resume` is implemented (audit `AGENT_RESUMED`); nothing suspends yet.
+- Not built in 2.1 (per §8): `/api/scenarios`, `/api/delegations`, `/metrics`. `POST /api/reset` truncates the audit/trace files (demo only). `resume` is implemented (audit `AGENT_RESUMED`); nothing suspends yet.
 - Errors: `{error, message}` JSON; 404 NOT_FOUND, 403 UNKNOWN_APPROVER/ROLE_NOT_ALLOWED, 409 NOT_PENDING/FOUR_EYES_SAME_APPROVER, 400 BAD_REQUEST.

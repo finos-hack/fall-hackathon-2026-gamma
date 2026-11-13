@@ -60,6 +60,17 @@ describe('S3 Structuring (SG-05)', () => {
     expect((await spend(val('CASE-A', 2, 3))).decision.outcome).toBe('approve'); // other parts are in CASE-B
   });
 
-  // Needs delegation grants (task 2.3): parts bought by a helper on loan-agent's authority share the same root agent.
-  it.skip('catches a purchase split across a helper agent with the same root (2.3)', async () => {});
+  it('catches a purchase split across a helper agent (same root agent)', async () => {
+    const { spend, call, clock } = await mk();
+    const c = 'CASE-1006';
+    const g = (await call('POST', '/api/delegations', { parentAgentId: 'loan-agent', childAgentId: 'fraud-agent', caseId: c, amount: 3, services: ['fraud-check.basic'] })).body;
+    // different params on every buy, so SG-08 (duplicate) does not fire first
+    const buy = (agentId: string, n: number, delegationId?: string) =>
+      spend({ caseId: c, agentId, delegationId, kind: 'service', service: 'fraud-check.basic', params: { subject: n } });
+    const p1 = await buy('loan-agent', 1); clock.advance(10_000); // $0.75, a normal buy for the T2 parent
+    const p2 = await buy('fraud-agent', 2, g.delegationId); clock.advance(10_000);
+    expect([p1, p2].map((x) => x.decision.outcome)).toEqual(['approve', 'approve']);
+    const p3 = await buy('fraud-agent', 3, g.delegationId); // helper limit is $1: 3 x $0.75 = $2.25
+    expect(p3.decision).toMatchObject({ outcome: 'escalate', reasonCode: 'STRUCTURING', ruleId: 'SG-05', linkedRequestIds: [p1.requestId, p2.requestId] });
+  });
 });

@@ -324,7 +324,7 @@ Scripted in `apps/guard/src/agents/scenarios.ts`; each run starts from a fresh c
 - **Optional, Tue:** `Dockerfile` + `docker-compose.yml` (one service), to match the FINOS demo's style.
 
 **API (all JSON, base `/api`)**
-`POST /spend` · `GET /requests/:id` · `POST /requests/:id/approve` · `POST /requests/:id/reject` · `POST /delegations` · `POST /agents/:id/resume` · `GET /state` (agents, budgets, cases, queue, last 200 requests) · `GET /audit?format=json|csv` · `GET /audit/verify` · `GET /evidence/:caseId?format=json|md` (§7.0) · `GET /finos/status` (§7.0) · `GET /policy` · `POST /policy/reload` · `GET /stream` (SSE) · `POST /scenarios/:id/run` (S1–S5, `?live=1` for §7.6) · `POST /reset` · `GET /traces` · *(stretch)* `GET /metrics` (Prometheus text).
+`POST /spend` · `GET /requests/:id` · `POST /requests/:id/approve` · `POST /requests/:id/reject` · `POST /delegations` · `POST /delegations/:id/approve|reject` (pending grant, D5: single approval, approver role must be in the parent's effective `tier.approverRoles`) · `POST /agents/:id/resume` · `GET /state` (agents, budgets, cases, queue, last 200 requests) · `GET /audit?format=json|csv` · `GET /audit/verify` · `GET /evidence/:caseId?format=json|md` (§7.0) · `GET /finos/status` (§7.0) · `GET /policy` · `POST /policy/reload` · `GET /stream` (SSE) · `POST /scenarios/:id/run` (S1–S5, `?live=1` for §7.6) · `POST /reset` · `GET /traces` · *(stretch)* `GET /metrics` (Prometheus text).
 
 **Folder structure (fits the hackathon template; template files stay at the root)**
 ```
@@ -511,7 +511,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 ### Day 2 — Sat 14 Nov (engine)
 - [x] **2.1 Guard core** (Sonnet). types, store, clock, `evaluate` steps 0–3 and 5–7 + 9, approvals (incl. four-eyes, expiry), hash-chained audit + verify + CSV, trace spans to JSONL, all endpoints except scenarios/evidence/finos. **DoD:** S1 and S2 pass as tests; extra tests for budget/duplicate/four-eyes/audit tamper pass.
 - [x] **2.2 Structuring + runaway** (Sonnet → Opus if stuck; explain first). SG-05, SG-07, suspension and resume. **DoD:** S3 and S5 tests + the structuring edge tests pass.
-- [ ] **2.3 Delegation** (Sonnet → Opus if stuck; explain first). Grant creation D1–D5, authority context, shared debits. **DoD:** S4 test + delegation edge tests pass; all tests green.
+- [x] **2.3 Delegation** (Sonnet → Opus if stuck; explain first). Grant creation D1–D5, authority context, shared debits. **DoD:** S4 test + delegation edge tests pass; all tests green.
 
 ### Day 3 — Sun 15 Nov (demo + UI)
 - [ ] **3.1 Scripted agents + scenario runner + SSE** (Sonnet). `client.ts` calls the HTTP API; S1–S5 runnable via `POST /api/scenarios/:id/run`; `/reset`; SSE events. **DoD:** with `curl` you can run each scenario and watch events stream; scenarios wait for human approvals.
@@ -604,3 +604,4 @@ Use the rubric's own words in the README and pitch: "multiple FINOS projects wor
 - Not built in 2.1 (per §8): `/api/scenarios`, `/api/delegations`, `/metrics`. `POST /api/reset` truncates the audit/trace files (demo only). `resume` is implemented (audit `AGENT_RESUMED`); nothing suspends yet.
 - Errors: `{error, message}` JSON; 404 NOT_FOUND, 403 UNKNOWN_APPROVER/ROLE_NOT_ALLOWED, 409 NOT_PENDING/FOUR_EYES_SAME_APPROVER, 400 BAD_REQUEST.
 - Task 2.2 done. SG-07 counts ALL of the agent's stored requests (any status, so looping denied duplicates also trips it) since its last resume (`AgentState.resumedAtSeq`). Identical = same service + `promptHash` (llm, only if given) or `paramsHash` (service). SG-05 lives inline in `evaluate.ts` step 8. The cross-helper structuring test is `it.skip` in `test/structuring.test.ts` until 2.3.
+- Task 2.3 done. Engine in `engine/delegation.ts` (`createGrant` D1-D5, `actOnGrant`) and `authorityOf()` in `engine/authority.ts` (own or delegated). Denied grants are stored (status `denied`) and audited. Grant `spent` = approved+pending requests with that `delegationId` (reject/expiry releases). A pending grant is unusable (`DELEGATION_INVALID`). Suspending an agent also freezes grants it issued and its helpers' spend. `GET /api/state` now has `delegations`. S4 is in `test/delegation.test.ts`; the cross-helper structuring test is un-skipped.

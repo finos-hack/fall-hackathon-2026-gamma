@@ -44,7 +44,7 @@ export function registerRoutes(app: FastifyInstance, ctx: Ctx, bus: Bus, policyP
       aigf: { ok: !!b?.ok, ids: b?.aigfIds ?? [] },
       calm: { ok: !!b?.ok, file: 'finos/calm/loan-approval-with-spend-guard.calm.json', sha: b?.sha ?? '' },
       ccc: { ok: !!b?.ok, controls: b?.cccControls ?? [] },
-      fluxnova: { connected: !!last, lastCallAt: last?.ts },
+      fluxnova: { connected: !!(last || ctx.fluxnova?.lastCallAt), lastCallAt: ctx.fluxnova?.lastCallAt ?? last?.ts },
     };
   });
   app.get('/api/evidence/:caseId', async (req, reply) => {

@@ -18,6 +18,8 @@ export interface Ctx {
   emit: (type: SseEventType, data: unknown) => void;
   /** Result of the CALM binding check at startup (undefined when skipped, e.g. a custom test policy). */
   finos?: import('../finos/calm-binding.js').BindingResult;
+  /** Last successful contact with the Fluxnova engine (set by the external task worker). */
+  fluxnova?: { lastCallAt?: string };
 }
 
 /** Requests that hold budget: approved + pending (pending reserves, rejected/expired/denied release). */

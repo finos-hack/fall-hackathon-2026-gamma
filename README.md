@@ -57,3 +57,7 @@ Copyright 2026 FINOS
 Distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 SPDX-License-Identifier: [Apache-2.0](https://spdx.org/licenses/Apache-2.0)
+
+## How to plug into the Steel Thread
+
+The guard can sit in front of a paid step of the FINOS Steel Thread loan process through a Fluxnova external task worker. Patched BPMN, worker and step-by-step setup: [finos/fluxnova/README.md](finos/fluxnova/README.md). To run the guard next to the Steel Thread (which uses port 8080): `PORT=8088 FLUXNOVA_URL=http://localhost:8080/engine-rest npm run dev -w apps/guard`, and for the UI `GUARD_URL=http://localhost:8088 npm run dev -w apps/control-room`.

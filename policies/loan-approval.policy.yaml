@@ -61,6 +61,7 @@ controls:
     enabled: true
     action: deny
     aigf: { risks: [AIR-SEC-024, AIR-OP-018], mitigations: [AIR-PREV-018] }
+    ccc: CCC.AgentSpend.CN01
     rationale: Agents may only buy services their role needs, like card merchant-category limits.
   - id: SG-02
     name: Case and daily budgets (cost centre)
@@ -68,6 +69,7 @@ controls:
     enabled: true
     action: deny
     aigf: { risks: [AIR-OP-018, PROPOSED-AIR-OP-SPEND], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    ccc: CCC.AgentSpend.CN02
     rationale: Hard caps per loan case and per agent per day. Pending approvals reserve budget.
   - id: SG-03
     name: Delegation-of-authority thresholds (signing limits)
@@ -75,6 +77,7 @@ controls:
     enabled: true
     action: escalate
     aigf: { risks: [AIR-SEC-024], mitigations: [AIR-PREV-018, PROPOSED-AIR-PREV-SPEND] }
+    ccc: CCC.AgentSpend.CN03
     rationale: Above the signing limit a human approves. Above the tier ceiling the request is outside delegated authority (deny).
   - id: SG-04
     name: Four-eyes principle
@@ -82,6 +85,7 @@ controls:
     enabled: true
     action: escalate
     aigf: { risks: [AIR-SEC-024], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    ccc: CCC.AgentSpend.CN04
     rationale: High-value spend needs two distinct approvers.
   - id: SG-05
     name: Split-purchase (structuring) detection
@@ -90,6 +94,7 @@ controls:
     action: escalate
     params: { windowMinutes: 10, minParts: 3, nearThresholdRatio: 0.5 }
     aigf: { risks: [AIR-SEC-024, PROPOSED-AIR-OP-SPEND], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    ccc: CCC.AgentSpend.CN05
     rationale: Borrowed from AML. Several near-threshold buys of the same service that together exceed the signing limit are escalated.
   - id: SG-06
     name: Delegation attenuation (no authority amplification)
@@ -97,6 +102,7 @@ controls:
     enabled: true
     action: deny
     aigf: { risks: [AIR-OP-028, AIR-SEC-024], mitigations: [AIR-PREV-022, AIR-PREV-018] }
+    ccc: CCC.AgentSpend.CN06
     rationale: A helper never gets more authority than its parent, and spends from the parent's budget (shared, not doubled).
   - id: SG-07
     name: Runaway agent circuit breaker (kill switch)
@@ -105,6 +111,7 @@ controls:
     action: deny_and_suspend
     params: { windowSeconds: 60, maxIdenticalRequests: 5, maxRequestsPerMinute: 30 }
     aigf: { risks: [AIR-OP-006, PROPOSED-AIR-OP-SPEND], mitigations: [AIR-DET-004] }
+    ccc: CCC.AgentSpend.CN07
     rationale: Looping agents are frozen like a blocked card. Only a human can resume them.
   - id: SG-08
     name: Duplicate purchase
@@ -113,6 +120,7 @@ controls:
     action: deny
     params: { windowSeconds: 60 }
     aigf: { risks: [AIR-OP-006], mitigations: [AIR-DET-004] }
+    ccc: CCC.AgentSpend.CN08
     rationale: The same paid check with the same parameters twice within a minute is denied.
   - id: SG-09
     name: Tamper-evident audit trail
@@ -120,4 +128,5 @@ controls:
     enabled: true
     action: approve
     aigf: { risks: [AIR-SEC-024], mitigations: [AIR-DET-021, AIR-DET-004] }
+    ccc: CCC.AgentSpend.CN09
     rationale: Every request, decision and approval goes to a hash-chained, exportable log.

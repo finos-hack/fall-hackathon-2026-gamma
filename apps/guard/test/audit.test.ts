@@ -18,7 +18,7 @@ describe('audit trail (SG-09)', () => {
     const decisionRow = lines[3].split(',');
     expect(decisionRow[cols.indexOf('calmControl')]).toBe('agent-spend-guard#agent-spend-authority');
     expect(decisionRow[cols.indexOf('source')]).toBe('scripted');
-    expect(decisionRow[cols.indexOf('cccControl')]).toBe(''); // filled in task 4.1
+    expect(decisionRow[cols.indexOf('cccControl')]).toBe('CCC.AgentSpend.CN09'); // approve decisions carry the SG-09 audit control
 
     (ctx.audit.entries[2].payload as Record<string, unknown>).amount = 0.0001;
     const broken = (await call('GET', '/api/audit/verify')).body;

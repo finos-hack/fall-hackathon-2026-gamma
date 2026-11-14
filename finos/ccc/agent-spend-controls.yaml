@@ -1,0 +1,520 @@
+# CCC-format control catalog for Agent Spend Guard.
+# Mirrors the structure of finos/common-cloud-controls catalogs/ai-ml/multi-agent-refarch
+# (metadata, capabilities, threats, controls), merged into one file.
+# Every control maps 1:1 to a policy control SG-01..SG-09 in policies/loan-approval.policy.yaml.
+# "Proof" comments point at the Vitest file that demonstrates each control.
+metadata:
+  id: CCC.AgentSpend
+  title: Agent Spend Authority
+  description: |
+    Controls that bound what AI agents may spend (LLM tokens, paid data and
+    verification services) under a delegation-of-authority policy, including
+    agent-to-agent delegation, enforced by the Agent Spend Guard policy
+    enforcement point.
+  version: dev
+  last-modified: "2026-11-14T00:00:00Z"
+  category-ids:
+    - CCC.AIML
+  applicability-categories:
+    - id: all
+      title: All Deployments
+      description: >-
+        Applies to every agent deployment whose agents spend money, directly or
+        through delegated helper agents.
+  mapping-references:
+    - id: finos-air
+      title: FINOS AI Governance Framework
+      version: "0.2.0"
+      description: >-
+        AIGF mitigations expressed as Gemara guidelines; each control
+        implements one of these guidelines.
+      url: https://grc.store/search/finos-aigf/finos-air/versions/0.2.0
+    - id: air-vec
+      title: AI Governance Framework Risk Vectors
+      version: "0.2.0"
+      description: >-
+        FINOS AIGF risks expressed as Gemara vectors; the grounding source for
+        every threat in this catalog.
+      url: https://grc.store/search/finos-aigf/air-vec/versions/0.2.0
+    - id: agent-spend-proposed
+      title: Proposed AIGF Risk and Mitigation for Agent Spend Authority
+      version: "0.1.0"
+      description: >-
+        Contribution drafted with this catalog. PROPOSED-AIR-OP-SPEND and
+        PROPOSED-AIR-PREV-SPEND are placeholders until AIGF assigns numbers.
+      url: file://../aigf/proposed-risk-agent-spend-authority.md
+    - id: agent-spend-capabilities
+      title: Agent Spend Capability Catalog
+      version: "1.0.0"
+      description: >-
+        Capabilities of the Agent Spend Guard that threats endanger and
+        controls protect.
+      url: file://agent-spend-controls.yaml
+    - id: agent-spend-threats
+      title: Agent Spend Threat Catalog
+      version: "1.0.0"
+      description: >-
+        Threats that controls in this catalog mitigate.
+      url: file://agent-spend-controls.yaml
+
+capabilities:
+  - id: CCC.AgentSpend.CP01
+    title: Spend authorisation point
+    description: >-
+      Policy enforcement point that receives every agent spend request and
+      returns approve, deny or escalate with the rule that fired.
+    group: spend-control
+  - id: CCC.AgentSpend.CP02
+    title: Human approval queue
+    description: >-
+      Queue where escalated spend waits for approvers whose role is allowed by
+      the agent's authority tier, with four-eyes where required.
+    group: spend-control
+  - id: CCC.AgentSpend.CP03
+    title: Agent-to-agent delegation
+    description: >-
+      Time-boxed grants through which one agent lets a helper agent spend from
+      the delegator's budget within a subset of the delegator's authority.
+    group: delegation
+  - id: CCC.AgentSpend.CP04
+    title: Spend audit and evidence
+    description: >-
+      Hash-chained audit log and OpenTelemetry spans carrying the decision,
+      rule, approver and framework references for every spend request.
+    group: evidence
+
+threats:
+  - id: CCC.AgentSpend.TH01
+    title: Agent buys services outside its role
+    description: >-
+      An agent invokes paid services or models that its role does not need,
+      because nothing restricts which merchants or services it may use,
+      widening the use of the agent beyond what was approved.
+    group: agentic-security
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP01
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-SEC-024-01
+          - reference-id: AIR-SEC-024-02
+  - id: CCC.AgentSpend.TH02
+    title: Runaway or unbudgeted agent spend
+    description: >-
+      Looping or non-deterministic agents consume tokens and paid checks
+      without a cap per case or per day, so cost is only discovered after the
+      fact.
+    group: model-availability
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP01
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-OP-007-01
+          - reference-id: AIR-OP-006-01
+  - id: CCC.AgentSpend.TH03
+    title: Spend above delegated authority
+    description: >-
+      An agent commits spend above its signing limit, or above the ceiling of
+      its authority tier, without a human with the right role approving it,
+      defeating segregation of duties.
+    group: agentic-security
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP01
+          - reference-id: CCC.AgentSpend.CP02
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-SEC-024-03
+          - reference-id: AIR-SEC-024-04
+  - id: CCC.AgentSpend.TH04
+    title: Threshold evasion by splitting purchases
+    description: >-
+      An agent, or several helper agents acting for the same case, split one
+      purchase into several small ones that each stay under the signing limit
+      (structuring), chaining individually authorised calls into an
+      unauthorised outcome.
+    group: agentic-security
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP01
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-SEC-024-02
+          - reference-id: AIR-SEC-024-03
+  - id: CCC.AgentSpend.TH05
+    title: Authority amplification through delegation
+    description: >-
+      A helper agent obtains more authority or budget than the agent that
+      called it, through broader services, higher limits, deeper delegation
+      chains or a budget of its own on top of the parent's.
+    group: agentic-security
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP03
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-OP-028-03
+          - reference-id: AIR-OP-028-04
+  - id: CCC.AgentSpend.TH06
+    title: Duplicate paid calls from agent retries
+    description: >-
+      The same paid check is bought repeatedly with identical parameters
+      because an agent retries or loops, wasting spend and polluting the
+      record of what was bought and why.
+    group: operational
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP01
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-OP-006-01
+  - id: CCC.AgentSpend.TH07
+    title: Spend that cannot be attributed or proven
+    description: >-
+      Spend cannot be tied to a case, agent, rule and approver, or the record
+      can be altered after the fact, leaving the second line of defence and
+      auditors without evidence.
+    group: governance-compliance
+    capabilities:
+      - reference-id: agent-spend-capabilities
+        entries:
+          - reference-id: CCC.AgentSpend.CP04
+    vectors:
+      - reference-id: air-vec
+        entries:
+          - reference-id: AIR-SEC-024-04
+
+controls:
+  # Proof: apps/guard/test/rules.test.ts (service not allowed, unknown service)
+  - id: CCC.AgentSpend.CN01
+    title: Service Allow-List
+    objective: >-
+      Restrict each agent to the services and models its role needs, like a
+      card merchant-category restriction.
+    group: PREV
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN01.AR01
+        text: >-
+          When an agent requests a service that is not on its allow-list, the
+          request MUST be denied with reason code SERVICE_NOT_ALLOWED.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN01.AR02
+        text: >-
+          When an agent requests a service that has no price in the policy, the
+          request MUST be denied with reason code UNKNOWN_SERVICE.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-PREV-018
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH01
+  # Proof: apps/guard/test/rules.test.ts (day budget, pending reserves, reject releases)
+  - id: CCC.AgentSpend.CN02
+    title: Case and Daily Budgets
+    objective: >-
+      Cap what an agent may spend per case and per day, counting approved and
+      pending spend so that waiting approvals reserve budget.
+    group: PREV
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN02.AR01
+        text: >-
+          When a request would take approved plus pending spend above the
+          agent's per-case or per-day budget, the request MUST be denied with
+          reason code CASE_BUDGET or DAY_BUDGET.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN02.AR02
+        text: >-
+          Budget reserved by a pending request MUST be released when that
+          request is rejected or expires.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-PREV-018
+      - reference-id: agent-spend-proposed
+        entries:
+          - reference-id: PROPOSED-AIR-PREV-SPEND
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH02
+  # Proof: apps/guard/test/scenarios.test.ts (S1, S2), apps/guard/test/rules.test.ts
+  - id: CCC.AgentSpend.CN03
+    title: Delegation-of-Authority Thresholds
+    objective: >-
+      Apply signing limits and approval ceilings per authority tier, so that
+      spend above an agent's limit is approved by a human with an allowed role
+      and spend above the tier ceiling is refused.
+    group: PREV
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN03.AR01
+        text: >-
+          When a request exceeds the agent's signing limit but not its tier
+          ceiling, the request MUST be escalated to an approver whose role is
+          listed for that tier.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN03.AR02
+        text: >-
+          When a request exceeds the tier ceiling, the request MUST be denied
+          with reason code ABOVE_DELEGATED_AUTHORITY.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-PREV-018
+      - reference-id: agent-spend-proposed
+        entries:
+          - reference-id: PROPOSED-AIR-PREV-SPEND
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH03
+  # Proof: apps/guard/test/scenarios.test.ts (S2 four-eyes)
+  - id: CCC.AgentSpend.CN04
+    title: Four-Eyes Principle
+    objective: >-
+      Require two distinct approvers for high-value spend.
+    group: PREV
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN04.AR01
+        text: >-
+          When a request exceeds the four-eyes threshold of the agent's tier,
+          the request MUST require two approvals before it is released.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN04.AR02
+        text: >-
+          The same approver MUST NOT be able to give both approvals; a second
+          approval by the same person MUST be refused.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: agent-spend-proposed
+        entries:
+          - reference-id: PROPOSED-AIR-PREV-SPEND
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH03
+  # Proof: apps/guard/test/structuring.test.ts (S3, edge cases)
+  - id: CCC.AgentSpend.CN05
+    title: Split-Purchase (Structuring) Detection
+    objective: >-
+      Detect several near-threshold purchases of the same service that together
+      exceed the signing limit, including splits across helper agents acting
+      for the same root agent.
+    group: DET
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN05.AR01
+        text: >-
+          When near-threshold purchases of the same service for the same case
+          and root agent reach the configured number of parts within the time
+          window and together exceed the signing limit, the latest request MUST
+          be escalated and linked to the earlier parts.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN05.AR02
+        text: >-
+          Purchases below the near-threshold ratio MUST NOT trigger structuring
+          detection.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: agent-spend-proposed
+        entries:
+          - reference-id: PROPOSED-AIR-PREV-SPEND
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH04
+  # Proof: apps/guard/test/delegation.test.ts (S4, edge cases)
+  - id: CCC.AgentSpend.CN06
+    title: Delegation Attenuation
+    objective: >-
+      Ensure a helper agent never holds more authority than the agent that
+      delegated to it, and spends from the delegator's budget rather than a
+      budget of its own.
+    group: PREV
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN06.AR01
+        text: >-
+          A delegation grant MUST be refused when the helper is not permitted
+          for that delegator, the chain exceeds the maximum depth, the services
+          are not a subset of the delegator's, or the amount exceeds what the
+          delegator has left.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN06.AR02
+        text: >-
+          Spend made under a delegation MUST be debited to the grant and to the
+          root agent's budgets only, and MUST be limited to services allowed by
+          both the grant and the helper.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-PREV-022
+          - reference-id: AIR-PREV-018
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH05
+  # Proof: apps/guard/test/runaway.test.ts (S5)
+  - id: CCC.AgentSpend.CN07
+    title: Runaway Agent Circuit Breaker
+    objective: >-
+      Freeze an agent that loops or bursts requests, and allow only a human to
+      resume it, like a blocked card.
+    group: DET
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN07.AR01
+        text: >-
+          When an agent exceeds the configured identical-request or
+          request-rate limit within the window, the request MUST be denied and
+          the agent MUST be suspended.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN07.AR02
+        text: >-
+          A suspended agent, and any helper spending on its delegation, MUST be
+          denied until a human resumes it, and the resume MUST be audited.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-DET-004
+      - reference-id: agent-spend-proposed
+        entries:
+          - reference-id: PROPOSED-AIR-PREV-SPEND
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH02
+  # Proof: apps/guard/test/rules.test.ts (duplicate within 60 s)
+  - id: CCC.AgentSpend.CN08
+    title: Duplicate Purchase Prevention
+    objective: >-
+      Refuse the same paid check, with the same parameters, bought twice in a
+      short window.
+    group: DET
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN08.AR01
+        text: >-
+          When the same agent requests the same service for the same case with
+          identical parameters within the configured window, the request MUST
+          be denied with reason code DUPLICATE.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-DET-004
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH06
+  # Proof: apps/guard/test/audit.test.ts (chain verifies, tamper breaks verify)
+  - id: CCC.AgentSpend.CN09
+    title: Tamper-Evident Audit Trail
+    objective: >-
+      Record every request, decision and approval in a hash-chained, exportable
+      log and emit a trace span per decision carrying the framework references.
+    group: DET
+    assessment-requirements:
+      - id: CCC.AgentSpend.CN09.AR01
+        text: >-
+          Every spend request, decision, approval, delegation and suspension
+          MUST be appended to the audit log with the hash of the previous
+          entry.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+      - id: CCC.AgentSpend.CN09.AR02
+        text: >-
+          Verification of the audit log MUST fail when any earlier entry has
+          been altered.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+    guidelines:
+      - reference-id: finos-air
+        entries:
+          - reference-id: AIR-DET-021
+          - reference-id: AIR-DET-004
+    threats:
+      - reference-id: agent-spend-threats
+        entries:
+          - reference-id: CCC.AgentSpend.TH07

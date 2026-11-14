@@ -263,6 +263,7 @@ controls:
       - reference-id: finos-air
         entries:
           - reference-id: AIR-PREV-018
+          - reference-id: AIR-DET-009
       - reference-id: agent-spend-proposed
         entries:
           - reference-id: PROPOSED-AIR-PREV-SPEND
@@ -449,6 +450,7 @@ controls:
       - reference-id: finos-air
         entries:
           - reference-id: AIR-DET-004
+          - reference-id: AIR-DET-009
       - reference-id: agent-spend-proposed
         entries:
           - reference-id: PROPOSED-AIR-PREV-SPEND

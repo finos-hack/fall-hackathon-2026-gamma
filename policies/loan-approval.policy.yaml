@@ -68,7 +68,7 @@ controls:
     type: budget
     enabled: true
     action: deny
-    aigf: { risks: [AIR-OP-018, PROPOSED-AIR-OP-SPEND], mitigations: [PROPOSED-AIR-PREV-SPEND] }
+    aigf: { risks: [AIR-OP-018, PROPOSED-AIR-OP-SPEND], mitigations: [AIR-DET-009, PROPOSED-AIR-PREV-SPEND] }
     ccc: CCC.AgentSpend.CN02
     rationale: Hard caps per loan case and per agent per day. Pending approvals reserve budget.
   - id: SG-03
@@ -110,7 +110,7 @@ controls:
     enabled: true
     action: deny_and_suspend
     params: { windowSeconds: 60, maxIdenticalRequests: 5, maxRequestsPerMinute: 30 }
-    aigf: { risks: [AIR-OP-006, PROPOSED-AIR-OP-SPEND], mitigations: [AIR-DET-004] }
+    aigf: { risks: [AIR-OP-006, PROPOSED-AIR-OP-SPEND], mitigations: [AIR-DET-009, AIR-DET-004] }
     ccc: CCC.AgentSpend.CN07
     rationale: Looping agents are frozen like a blocked card. Only a human can resume them.
   - id: SG-08

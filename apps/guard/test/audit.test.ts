@@ -8,14 +8,14 @@ describe('audit trail (SG-09)', () => {
     await spend(llm('C'));
     const v = (await call('GET', '/api/audit/verify')).body;
     expect(v.ok).toBe(true);
-    expect(v.count).toBe(5); // POLICY_LOADED + 2 x (SPEND_REQUESTED, DECISION)
+    expect(v.count).toBe(6); // POLICY_LOADED + CALM_BINDING_VERIFIED + 2 x (SPEND_REQUESTED, DECISION)
 
     const csv = (await call('GET', '/api/audit?format=csv')).body as string;
     const lines = csv.trim().split('\n');
     expect(lines[0]).toBe('seq,ts,type,actor,caseId,agentId,onBehalfOf,service,amount,outcome,ruleId,reason,approver,aigfRisks,cccControl,calmControl,source,traceId,hash');
-    expect(lines).toHaveLength(6);
+    expect(lines).toHaveLength(7);
     const cols = lines[0].split(',');
-    const decisionRow = lines[3].split(',');
+    const decisionRow = lines[4].split(',');
     expect(decisionRow[cols.indexOf('calmControl')]).toBe('agent-spend-guard#agent-spend-authority');
     expect(decisionRow[cols.indexOf('source')]).toBe('scripted');
     expect(decisionRow[cols.indexOf('cccControl')]).toBe('CCC.AgentSpend.CN09'); // approve decisions carry the SG-09 audit control

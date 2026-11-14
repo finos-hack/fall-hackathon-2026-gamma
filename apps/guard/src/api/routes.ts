@@ -7,6 +7,7 @@ import { approve, reject, resumeAgent, sweepExpired } from '../engine/approvals.
 import { spentOnCase, spentToday, type Ctx } from '../engine/authority.js';
 import { evaluate } from '../engine/evaluate.js';
 import { loadPolicy } from '../policy/load.js';
+import { buildEvidence, evidenceMarkdown } from '../finos/evidence.js';
 import { openStream, type Bus } from './sse.js';
 
 const SpendBody = z.object({
@@ -35,6 +36,23 @@ export function registerRoutes(app: FastifyInstance, ctx: Ctx, bus: Bus, policyP
     if (!request) throw new HttpError(404, 'NOT_FOUND', `Request ${id} not found`);
     return { request, decision: ctx.store.decisions.get(id), approvals: ctx.store.approvalsFor(id) };
   };
+
+  app.get('/api/finos/status', async () => {
+    const b = ctx.finos;
+    const last = [...ctx.store.requests.values()].filter((r) => r.source === 'fluxnova').pop();
+    return {
+      aigf: { ok: !!b?.ok, ids: b?.aigfIds ?? [] },
+      calm: { ok: !!b?.ok, file: 'finos/calm/loan-approval-with-spend-guard.calm.json', sha: b?.sha ?? '' },
+      ccc: { ok: !!b?.ok, controls: b?.cccControls ?? [] },
+      fluxnova: { connected: !!last, lastCallAt: last?.ts },
+    };
+  });
+  app.get('/api/evidence/:caseId', async (req, reply) => {
+    const ev = buildEvidence(ctx, (req.params as { caseId: string }).caseId);
+    if (!ev.items.length) throw new HttpError(404, 'NOT_FOUND', `No requests for case ${ev.caseId}`);
+    if ((req.query as { format?: string }).format === 'md') return reply.header('Content-Type', 'text/markdown; charset=utf-8').send(evidenceMarkdown(ev));
+    return ev;
+  });
 
   app.get('/api/policy', async () => ctx.policy);
   app.post('/api/policy/reload', async () => {
@@ -106,6 +124,7 @@ export function registerRoutes(app: FastifyInstance, ctx: Ctx, bus: Bus, policyP
   app.post('/api/reset', async () => {
     ctx.store.reset(); ctx.audit.reset(); ctx.traces.reset();
     ctx.audit.append('POLICY_LOADED', 'spend-guard', { policyName: ctx.policy.metadata.name, version: ctx.policy.metadata.version }, ctx.clock.now().toISOString());
+    if (ctx.finos) ctx.audit.append('CALM_BINDING_VERIFIED', 'spend-guard', { calmFile: 'finos/calm/loan-approval-with-spend-guard.calm.json', sha256: ctx.finos.sha, ok: ctx.finos.ok }, ctx.clock.now().toISOString());
     ctx.emit('reset', {});
     return { ok: true };
   });

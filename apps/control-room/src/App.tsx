@@ -10,7 +10,7 @@ import { RequestDrawer } from './components/RequestDrawer';
 import { AgentsPanel, AuditLog, PolicyViewer } from './components/Tabs';
 
 export default function App() {
-  const { state, policy, online, refresh } = useGuard();
+  const { state, policy, finos, online, refresh } = useGuard();
   const [actor, setActor] = useState('sofia');
   const [tab, setTab] = useState<'audit' | 'agents' | 'policy'>('audit');
   const [selected, setSelected] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <SuspensionBanner agents={frozen} onResume={(id) => act(() => call('POST', `/agents/${id}/resume`, { approverId: actor }), `${id} resumed`)} />
       <Header
-        state={state} approvers={policy?.approvers ?? []} actor={actor} setActor={setActor} online={online} showDemo={showDemo}
+        state={state} finos={finos} approvers={policy?.approvers ?? []} actor={actor} setActor={setActor} online={online} showDemo={showDemo}
         onRun={(id) => act(() => call('POST', `/scenarios/${id}/run`), `Scenario ${id} started`)}
         onReset={() => act(() => call('POST', '/reset'), 'Guard reset')}
       />

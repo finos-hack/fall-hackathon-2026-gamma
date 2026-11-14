@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, ShieldCheck, ShieldX } from 'lucide-react';
+import { Download, FileText, ShieldCheck, ShieldX } from 'lucide-react';
 import { call, money, type AuditEntry, type Control, type State } from '../api';
 
 export function AuditLog({ state }: { state: State | null }) {
@@ -7,6 +7,9 @@ export function AuditLog({ state }: { state: State | null }) {
   const [v, setV] = useState<{ ok: boolean; count: number } | null>(null);
   const [type, setType] = useState('');
   const [agent, setAgent] = useState('');
+  const [caseId, setCase] = useState('');
+  const cases = (state?.cases ?? []).map((c) => c.caseId);
+  const evCase = caseId || cases[cases.length - 1] || '';
   useEffect(() => {
     call<AuditEntry[]>('GET', '/audit').then(setEntries).catch(() => {});
     call<{ ok: boolean; count: number }>('GET', '/audit/verify').then(setV).catch(() => {});
@@ -28,7 +31,16 @@ export function AuditLog({ state }: { state: State | null }) {
         {v && (v.ok
           ? <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"><ShieldCheck size={12} /> chain intact, {v.count} entries</span>
           : <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"><ShieldX size={12} /> chain BROKEN</span>)}
-        <span className="ml-auto flex gap-2">
+        <span className="ml-auto flex items-center gap-2">
+          <select className={sel} value={evCase} onChange={(e) => setCase(e.target.value)} aria-label="Case for evidence report">
+            {cases.length === 0 && <option value="">no cases yet</option>}{cases.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          {evCase && (
+            <>
+              <a className={`${sel} inline-flex items-center gap-1`} href={`/api/evidence/${evCase}?format=md`} target="_blank" rel="noreferrer"><FileText size={12} /> Evidence report</a>
+              <a className={`${sel} inline-flex items-center gap-1`} href={`/api/evidence/${evCase}`} target="_blank" rel="noreferrer">JSON</a>
+            </>
+          )}
           <a className={`${sel} inline-flex items-center gap-1`} href="/api/audit?format=csv"><Download size={12} /> CSV</a>
           <a className={`${sel} inline-flex items-center gap-1`} href="/api/audit" target="_blank" rel="noreferrer"><Download size={12} /> JSON</a>
         </span>

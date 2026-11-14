@@ -1,5 +1,5 @@
 import { ChevronDown, Play, RotateCcw, ShieldAlert, Diamond } from 'lucide-react';
-import type { AgentInfo, State } from '../api';
+import type { AgentInfo, FinosStatus, State } from '../api';
 import { money } from '../api';
 
 const SCENARIOS = [
@@ -8,7 +8,7 @@ const SCENARIOS = [
 ];
 
 export function Header(p: {
-  state: State | null; approvers: { id: string; name: string; role: string }[]; actor: string; setActor: (s: string) => void;
+  state: State | null; finos: FinosStatus | null; approvers: { id: string; name: string; role: string }[]; actor: string; setActor: (s: string) => void;
   online: boolean; showDemo: boolean; onRun: (id: string) => void; onReset: () => void;
 }) {
   return (
@@ -17,9 +17,7 @@ export function Header(p: {
       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600" title="Active policy">
         {p.state ? `policy "${p.state.policy.name}" v${p.state.policy.version}` : p.online ? 'loading...' : 'guard unreachable'}
       </span>
-      <span className="rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs text-slate-400" title="Wired up in task 4.1">
-        FINOS chain: AIGF - | CALM - | CCC - | Fluxnova -
-      </span>
+      <FinosChainBadge finos={p.finos} />
       <div className="ml-auto flex items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-slate-600">
           Acting as
@@ -49,6 +47,23 @@ export function Header(p: {
         </button>
       </div>
     </header>
+  );
+}
+
+function FinosChainBadge({ finos }: { finos: FinosStatus | null }) {
+  const items: [string, boolean, string][] = finos ? [
+    ['AIGF', finos.aigf.ok, `${finos.aigf.ids.length} risk and mitigation ids referenced by the policy`],
+    ['CALM', finos.calm.ok, `binding verified at startup, sha256 ${finos.calm.sha.slice(0, 12)}`],
+    ['CCC', finos.ccc.ok, `${finos.ccc.controls.length} controls in the catalog`],
+    ['Fluxnova', finos.fluxnova.connected, finos.fluxnova.connected ? `last call ${finos.fluxnova.lastCallAt}` : 'no call from the loan process yet'],
+  ] : [];
+  return (
+    <span className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs" title="FINOS pipeline: AIGF, CALM, CCC, Fluxnova">
+      <span className="text-slate-500">FINOS chain</span>
+      {finos ? items.map(([name, ok, tip]) => (
+        <span key={name} title={tip} className={ok ? 'font-medium text-green-700' : 'text-slate-400'}>{name} {ok ? '✓' : '–'}</span>
+      )) : <span className="text-slate-400">checking...</span>}
+    </span>
   );
 }
 

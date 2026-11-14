@@ -1,0 +1,153 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "agent-spend-guard"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "spendguard"
+          },
+          "spans": [
+            {
+              "traceId": "61d8bd4a82156c217f1824234da92088",
+              "spanId": "c9f1c567541fd791",
+              "name": "spendguard.evaluate",
+              "kind": 1,
+              "startTimeUnixNano": "1794655613105000000",
+              "endTimeUnixNano": "1794655613105000000",
+              "attributes": [
+                {
+                  "key": "gen_ai.agent.id",
+                  "value": {
+                    "stringValue": "loan-agent"
+                  }
+                },
+                {
+                  "key": "gen_ai.request.model",
+                  "value": {
+                    "stringValue": "llm.premium"
+                  }
+                },
+                {
+                  "key": "gen_ai.usage.input_tokens",
+                  "value": {
+                    "intValue": 8000
+                  }
+                },
+                {
+                  "key": "gen_ai.usage.output_tokens",
+                  "value": {
+                    "intValue": 2000
+                  }
+                },
+                {
+                  "key": "spendguard.case_id",
+                  "value": {
+                    "stringValue": "CASE-1005"
+                  }
+                },
+                {
+                  "key": "spendguard.service",
+                  "value": {
+                    "stringValue": "llm.premium"
+                  }
+                },
+                {
+                  "key": "spendguard.amount",
+                  "value": {
+                    "doubleValue": 0.27
+                  }
+                },
+                {
+                  "key": "spendguard.currency",
+                  "value": {
+                    "stringValue": "USD"
+                  }
+                },
+                {
+                  "key": "spendguard.decision",
+                  "value": {
+                    "stringValue": "deny"
+                  }
+                },
+                {
+                  "key": "spendguard.reason_code",
+                  "value": {
+                    "stringValue": "RUNAWAY"
+                  }
+                },
+                {
+                  "key": "spendguard.rule_id",
+                  "value": {
+                    "stringValue": "SG-07"
+                  }
+                },
+                {
+                  "key": "spendguard.source",
+                  "value": {
+                    "stringValue": "scripted"
+                  }
+                },
+                {
+                  "key": "spendguard.delegation.root_agent_id",
+                  "value": {
+                    "stringValue": "loan-agent"
+                  }
+                },
+                {
+                  "key": "spendguard.policy.version",
+                  "value": {
+                    "stringValue": "1.0.0"
+                  }
+                },
+                {
+                  "key": "aigf.risk_ids",
+                  "value": {
+                    "stringValue": "AIR-OP-006,PROPOSED-AIR-OP-SPEND"
+                  }
+                },
+                {
+                  "key": "aigf.mitigation_ids",
+                  "value": {
+                    "stringValue": "AIR-DET-009,AIR-DET-004,AIR-PREV-022,AIR-PREV-018"
+                  }
+                },
+                {
+                  "key": "ccc.control_id",
+                  "value": {
+                    "stringValue": "CCC.AgentSpend.CN07"
+                  }
+                },
+                {
+                  "key": "calm.node_id",
+                  "value": {
+                    "stringValue": "agent-spend-guard"
+                  }
+                },
+                {
+                  "key": "calm.control_id",
+                  "value": {
+                    "stringValue": "agent-spend-authority"
+                  }
+                }
+              ],
+              "events": [],
+              "status": {
+                "code": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

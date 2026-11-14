@@ -89,7 +89,8 @@ threats:
     description: >-
       An agent invokes paid services or models that its role does not need,
       because nothing restricts which merchants or services it may use,
-      widening the use of the agent beyond what was approved.
+      widening the use of the agent beyond what was approved (AIGF AIR-OP-018,
+      Model Overreach / Expanded Use).
     group: agentic-security
     capabilities:
       - reference-id: agent-spend-capabilities

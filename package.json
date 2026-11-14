@@ -10,9 +10,11 @@
     "build": "npm run build -w apps/control-room",
     "test": "npm test -w apps/guard",
     "gen:schema": "npm run gen:schema -w apps/guard",
+    "finos:validate": "tsx scripts/finos-validate.ts",
     "check:dco": "node scripts/check-dco.mjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.0"
   }
 }

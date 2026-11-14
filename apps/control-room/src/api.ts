@@ -27,6 +27,10 @@ export interface State {
   delegations: Delegation[];
   cases: { caseId: string; byAgent: { agentId: string; spent: number }[] }[];
 }
+export interface FinosStatus {
+  aigf: { ok: boolean; ids: string[] }; calm: { ok: boolean; file: string; sha: string };
+  ccc: { ok: boolean; controls: string[] }; fluxnova: { connected: boolean; lastCallAt?: string };
+}
 export interface Control { id: string; name: string; enabled: boolean; action: string; ccc?: string; aigf: { risks: string[]; mitigations: string[] }; rationale: string }
 export interface Policy { approvers: { id: string; name: string; role: string }[]; controls?: Control[] }
 

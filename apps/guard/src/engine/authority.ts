@@ -16,6 +16,8 @@ export interface Ctx {
   traces: TraceWriter;
   clock: Clock;
   emit: (type: SseEventType, data: unknown) => void;
+  /** Result of the CALM binding check at startup (undefined when skipped, e.g. a custom test policy). */
+  finos?: import('../finos/calm-binding.js').BindingResult;
 }
 
 /** Requests that hold budget: approved + pending (pending reserves, rejected/expired/denied release). */

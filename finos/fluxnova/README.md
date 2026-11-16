@@ -47,3 +47,9 @@ Document intelligence -> Valid? -> [Authorise agent spend] -> AI: Fraud Detectio
 - **Escalate** keeps the task locked: the worker extends the lock until a human resolves the request in the
   approval queue, or it expires after 15 minutes (counted as denied, so `SPEND_DENIED`).
 - Without `FLUXNOVA_URL` nothing changes: no worker starts and `npm i && npm run dev` runs as before.
+
+## Not yet verified
+
+- The engine credentials `demo` / `demo` have not been tested against a running engine.
+- The patched BPMN was only checked as well-formed XML. It has not been opened in the Fluxnova Modeler.
+- The worker has only run against the mock engine in `fluxnova.test.ts`, not a real Steel Thread stack.

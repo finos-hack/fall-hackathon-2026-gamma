@@ -4,8 +4,8 @@ Use the rubric's words: "multiple FINOS projects working synergistically", "dete
 
 - **0:00-0:20 Hook.** "Banks already decide who can spend how much. AI agents have no such rules yet."
 - **0:20-0:40 Gap.** The Steel Thread governs what the loan agent decides and already measures tokens. Nobody controls the spend. "You measure spending. This controls it."
-- **0:40-2:05 Live demo.**
-  - S1: normal case, small spends auto-approved.
+- **0:40-2:05 Demo in the control room.** All five scenarios are scripted agents against the mocked vendors; do not claim a live LLM or a live Fluxnova run.
+  - S1: normal case (scripted agent), small spends auto-approved.
   - S2: a $28 credit report needs four-eyes; Sofia and Marco approve.
   - S3: the agent splits $9 into three $3 purchases and is caught.
   - S4: the fraud helper cannot exceed its parent's authority and spends from the same budget.

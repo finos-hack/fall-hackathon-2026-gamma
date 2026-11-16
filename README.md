@@ -45,8 +45,8 @@ flowchart LR
 Requirements: **Node 22 or newer** and npm. No API keys, Docker or database are needed: all vendors, prices and agents are mocked.
 
 ```sh
-git clone <this repository>
-cd <repository folder>
+git clone https://github.com/finos-hack/fall-hackathon-2026-gamma
+cd fall-hackathon-2026-gamma
 npm install
 npm run dev
 ```

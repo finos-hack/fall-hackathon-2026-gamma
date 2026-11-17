@@ -133,7 +133,7 @@ Built solo in four days, spec-first with Claude Code. Short version (full story 
 ## Roadmap
 
 1. Run the guard against the real Steel Thread stack (Java 21 + Docker) and confirm `source: fluxnova` requests in the control room.
-2. Live LLM mode, where a real Claude agent is governed through the guard (cut, not built).
+2. Live LLM agent mode: real Claude calls governed by the guard (designed in spec §7.6).
 3. Contribute the proposed risk and mitigation to AIGF and the controls to CCC.
 4. Add the guard to the Steel Thread as a governed CALM node and send its spans to the Grafana/Tempo there.
 5. Authorise-then-capture settlement with actual token usage, and a policy what-if simulator.

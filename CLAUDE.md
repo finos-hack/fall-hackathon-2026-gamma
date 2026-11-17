@@ -521,12 +521,12 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 ### Day 4 — Mon 16 Nov (FINOS pipeline + story)
 - [x] **4.1 FINOS artefacts + pipeline wiring** (Sonnet; Opus if the CCC/CALM formats are confusing). Verify the AIGF IDs (§2.2 note); CALM file + requirement (§7.1); CCC catalog (§7.4) + `ccc:` ids in the policy; CALM binding at startup (§7.0.1); `GET /api/finos/status` + header badge; evidence report endpoint + UI button + sample file (§7.0.3); `finos:validate` (§7.0.4); sample trace with CCC/CALM attributes; AIGF risk + mitigation markdown (§7.3). **DoD:** guard refuses to start with a broken CALM binding and starts with the correct one (test); `npm run finos:validate` prints all ✓ (or documents why the CALM CLI was skipped); evidence report for CASE-1005 lists AIGF + CCC + CALM refs; header shows the FINOS chain.
 - [x] **4.2 Docs + README** (Opus for polish). Fill the README template (name, track, problem, install, usage, dev setup, architecture diagram (mermaid) showing the §7.0 pipeline, FINOS integration section, **"How it was built"** (spec-first CLAUDE.md, one Claude Code session per task, model-switching rules, tests as the spec's scenarios, AI tools used), roadmap, demo video link placeholder); `docs/prd.md`, `personas.md`, `doa-mapping.md` (table below), `pitch.md`, `demo-script.md`, `how-it-was-built.md`. **DoD:** someone new can clone, `npm i && npm run dev`, and run the demo from the README alone.
-- [ ] **4.3 Dry run + fixes** (Sonnet). Two timed rehearsals of the demo, fix bugs, small UI polish. **DoD:** 2 clean runs under 3:00; all tests green; `check:dco` clean; pushed to `origin`.
+- [x] **4.3 Dry run + fixes** (Sonnet). Two timed rehearsals of the demo, fix bugs, small UI polish. **DoD:** 2 clean runs under 3:00 (both under 3:00, not precisely timed); all tests green; `check:dco` clean; pushed to `origin`.
 
 ### Tue 17 Nov — integration + video
 - [x] **T1 Fluxnova / Steel Thread hook** (Sonnet → Opus if stuck; explain first; **timebox 4 h**, §7.5). **DoD:** either a real Steel Thread loan run shows `source: fluxnova` requests in the control room, or the full fallback (patched BPMN + worker + mocked-engine test + README how-to) is committed.
 - [ ] **T2 Live LLM mode** (Sonnet; **timebox 2 h**, §7.6). **DoD:** with `LIVE_LLM=1`, S1 runs with real Claude calls through the guard; S5 live is stopped by SG-07; scripted mode unchanged.
-- [ ] **T3 Demo video** (≤3 min, screen + voice; upload unlisted, link in README). Show the FINOS chain badge, one Fluxnova-sourced request (or the fallback), one live-LLM run, and the evidence report.
+- [ ] **T3 Demo video** optional (judging is a live presentation). Instead: timed live rehearsal + short backup screen recording.
 - Then stretch only: **X1** what-if simulator (edit a threshold, replay recorded requests, show the decision diff); **X3** `/metrics` for Prometheus/Grafana; Docker.
 
 ### Wed 18 Nov — submission

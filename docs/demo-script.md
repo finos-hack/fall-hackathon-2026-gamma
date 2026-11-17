@@ -15,5 +15,5 @@ Setup: `npm run dev`, open http://localhost:5173, click **Reset**, press `d` to 
 
 Rehearsal notes: S2 and S3 wait for a human, so click quickly. Record the two timed runs (task 4.3):
 
-- Run 1: not yet done
-- Run 2: not yet done
+- Run 1: both under 3:00 (not precisely timed)
+- Run 2: both under 3:00 (not precisely timed)

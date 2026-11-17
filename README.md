@@ -9,7 +9,7 @@ The FINOS Steel Thread governs *what* the loan agent decides, and it already mea
 
 The policy is a YAML file that reads like a bank's **delegation-of-authority (DoA) matrix**: signing limits, four-eyes, budgets per case, merchant restrictions, and agent-to-agent delegation where authority only narrows. A compliance control room shows live spend, the approval queue, a tamper-evident audit log and a per-case evidence report.
 
-Demo video: _link to be added_
+Judged as a live presentation.
 
 ## The FINOS projects working as one pipeline
 
@@ -19,7 +19,7 @@ flowchart LR
     CCC["CCC<br/>control catalog<br/>CCC.AgentSpend CN01..CN09"] --> POL
     CALM["CALM<br/>architecture as code<br/>node agent-spend-guard<br/>control agent-spend-authority"] -->|"binding verified<br/>at startup"| G
     POL["policy YAML<br/>(DoA matrix)"] --> G
-    FLX["Fluxnova<br/>loan process"] -->|"external task<br/>spend-guard"| G
+    FLX["Fluxnova loan process<br/>(fallback: worker + patched BPMN,<br/>ready to plug in)"] -.->|"external task<br/>spend-guard"| G
     AG["Scripted agents"] -->|"POST /api/spend"| G
     G["Agent Spend Guard<br/>approve / deny / escalate"] --> UI["Control room<br/>feed, approvals, audit"]
     G --> OTEL["OpenTelemetry spans<br/>+ evidence report"]
@@ -30,7 +30,7 @@ flowchart LR
 | **AIGF** | Every policy control cites AIGF risk and mitigation IDs (e.g. `AIR-SEC-024` Agent Action Authorization Bypass, `AIR-OP-028` Multi-Agent Trust Boundary Violations). We also draft one new risk and one new mitigation: [`finos/aigf/`](finos/aigf/). |
 | **CALM** | [`loan-approval-with-spend-guard.calm.json`](finos/calm/loan-approval-with-spend-guard.calm.json) adds an `agent-spend-guard` node and an `agent-spend-authority` control. The control's requirement is the JSON Schema generated from our policy model. **On startup the guard verifies this binding** (the config is the policy actually loaded, the policy validates against the requirement, every control has AIGF refs and a CCC id) and refuses to start if it is broken. |
 | **CCC** | [`agent-spend-controls.yaml`](finos/ccc/agent-spend-controls.yaml): one control per rule SG-01..SG-09 with threats, testable assessment requirements and a pointer to the test that proves it. |
-| **Fluxnova** | A worker and a patched Steel Thread BPMN that call the guard before the paid fraud step. **Fallback path only**, see below. |
+| **Fluxnova** | Fallback: a worker, a patched Steel Thread BPMN and a mocked-engine test, ready to plug in. Not running in the Steel Thread; see below. |
 | **OpenTelemetry** | One `spendguard.evaluate` span per decision (GenAI semantic-convention attributes plus `aigf.*`, `ccc.*`, `calm.*`), written to `data/traces.jsonl`. Example: [`sample-trace.json`](finos/traces/sample-trace.json). |
 | **Evidence** | `GET /api/evidence/:caseId` produces an audit-ready report per case with AIGF, CCC and CALM refs, approvers, trace ids and chain verification. Example: [`sample-evidence-CASE-1005.md`](finos/evidence/sample-evidence-CASE-1005.md). |
 
@@ -133,7 +133,7 @@ Built solo in four days, spec-first with Claude Code. Short version (full story 
 ## Roadmap
 
 1. Run the guard against the real Steel Thread stack (Java 21 + Docker) and confirm `source: fluxnova` requests in the control room.
-2. Optional: a live LLM mode, where a real Claude agent is governed through the guard (not built yet).
+2. Live LLM mode, where a real Claude agent is governed through the guard (cut, not built).
 3. Contribute the proposed risk and mitigation to AIGF and the controls to CCC.
 4. Add the guard to the Steel Thread as a governed CALM node and send its spans to the Grafana/Tempo there.
 5. Authorise-then-capture settlement with actual token usage, and a policy what-if simulator.

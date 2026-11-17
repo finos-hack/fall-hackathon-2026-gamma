@@ -26,4 +26,4 @@ Everything external is mocked. Ideas went to a "Later" list rather than into the
 6. Fluxnova worker and patched BPMN, tested against a mock engine only.
 
 ## Honest limits
-The Fluxnova hook has not run against the real Steel Thread stack, and the live LLM mode is not built. See the [README](../README.md).
+The Fluxnova hook has not run against the real Steel Thread stack, and the live LLM mode was cut (roadmap only). See the [README](../README.md).

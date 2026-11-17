@@ -5,7 +5,7 @@ Setup: `npm run dev`, open http://localhost:5173, click **Reset**, press `d` to 
 | Time | Action | Say |
 |---|---|---|
 | 0:00 | Header visible | "Banks decide who can spend how much. AI agents have no such rules. This is that control." Point at the FINOS chain badge. |
-| 0:20 | Demo > S1 | "A normal loan case, run by a scripted agent. Small spends, all auto-approved within the agent's signing limit." (Do not say it is a live LLM or a Fluxnova run.) |
+| 0:20 | Demo > S1 | "A normal loan case, run by a scripted agent. Small spends, all auto-approved within the agent's signing limit." |
 | 0:40 | Demo > S2 | "A $28 credit report is above the four-eyes limit." Approve as Sofia; try Sofia again (refused); switch to Marco and approve. |
 | 1:10 | Demo > S3 | "The agent splits one $9 purchase into three $3 purchases to dodge approval. Borrowed from AML structuring detection." Open the escalated card, show the linked parts, reject. |
 | 1:35 | Demo > S4 | "The loan agent delegates to a fraud helper. The helper cannot exceed its parent and spends from the same budget." Show the denied enhanced check in the feed. |

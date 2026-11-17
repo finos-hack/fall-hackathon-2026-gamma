@@ -525,7 +525,7 @@ Day 1 is a half day (Fri 13 Nov evening). Must-haves come first. Each row is one
 
 ### Tue 17 Nov — integration + video
 - [x] **T1 Fluxnova / Steel Thread hook** (Sonnet → Opus if stuck; explain first; **timebox 4 h**, §7.5). **DoD:** either a real Steel Thread loan run shows `source: fluxnova` requests in the control room, or the full fallback (patched BPMN + worker + mocked-engine test + README how-to) is committed.
-- [ ] **T2 Live LLM mode** (Sonnet; **timebox 2 h**, §7.6). **DoD:** with `LIVE_LLM=1`, S1 runs with real Claude calls through the guard; S5 live is stopped by SG-07; scripted mode unchanged.
+- [x] **T2 Live LLM mode: CUT, NOT BUILT** (cut list #6; moved to README roadmap) (Sonnet; **timebox 2 h**, §7.6). **DoD:** with `LIVE_LLM=1`, S1 runs with real Claude calls through the guard; S5 live is stopped by SG-07; scripted mode unchanged.
 - [ ] **T3 Demo video** optional (judging is a live presentation). Instead: timed live rehearsal + short backup screen recording.
 - Then stretch only: **X1** what-if simulator (edit a threshold, replay recorded requests, show the decision diff); **X3** `/metrics` for Prometheus/Grafana; Docker.
 

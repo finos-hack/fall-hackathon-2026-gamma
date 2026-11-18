@@ -574,7 +574,7 @@ End of Sat: the engine is done (all S1–S5 tests pass). If not, go straight to 
 - [ ] Every commit signed off (`npm run check:dco` prints nothing)
 - [ ] Tests green; `npm run finos:validate` all ✓; fresh clone → `npm i && npm run dev` works
 - [ ] `finos/` artefacts present (CALM, requirement, CCC catalog, AIGF md, Fluxnova hook or fallback, sample trace, sample evidence)
-- [ ] Backup screen recording ready (judging is live)
+- [ ] Backup screen recording ready (judging is live) (skipped)
 - [ ] Full unsquashed history pushed to `hackathon` by Wed 12:00 ET; verified in the browser
 - [ ] Submitted before Wed 18 Nov 17:00 ET
 - [ ] Portfolio: export `docs/prd.md`, `personas.md`, `doa-mapping.md` and screenshots for the case study

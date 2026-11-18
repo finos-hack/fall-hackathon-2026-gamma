@@ -9,7 +9,7 @@ The FINOS Steel Thread governs *what* the loan agent decides, and it already mea
 
 The policy is a YAML file that reads like a bank's **delegation-of-authority (DoA) matrix**: signing limits, four-eyes, budgets per case, merchant restrictions, and agent-to-agent delegation where authority only narrows. A compliance control room shows live spend, the approval queue, a tamper-evident audit log and a per-case evidence report.
 
-Judged as a live presentation.
+There is no demo video: the project is presented live. Screenshots of every scenario are in the Usage example section below.
 
 ## The FINOS projects working as one pipeline
 
@@ -33,6 +33,8 @@ flowchart LR
 | **Fluxnova** | Fallback: a worker, a patched Steel Thread BPMN and a mocked-engine test, ready to plug in. Not running in the Steel Thread; see below. |
 | **OpenTelemetry** | One `spendguard.evaluate` span per decision (GenAI semantic-convention attributes plus `aigf.*`, `ccc.*`, `calm.*`), written to `data/traces.jsonl`. Example: [`sample-trace.json`](finos/traces/sample-trace.json). |
 | **Evidence** | `GET /api/evidence/:caseId` produces an audit-ready report per case with AIGF, CCC and CALM refs, approvers, trace ids and chain verification. Example: [`sample-evidence-CASE-1005.md`](finos/evidence/sample-evidence-CASE-1005.md). |
+
+`npm run finos:validate` runs the CALM CLI and reports 19 known errors, none of which affect the guard. 18 come from the upstream Steel Thread file (`ai-steel-thread.local` requirement URLs the CLI won't load). 1 comes from our control's `config-url`, which points to the YAML policy, while the CLI only parses JSON configs. The guard's own startup binding check validates that YAML policy against the requirement schema instead.
 
 ### Fluxnova / Steel Thread: what is and is not done
 
@@ -60,7 +62,7 @@ PORT=8088 npm run dev -w apps/guard
 GUARD_URL=http://localhost:8088 npm run dev -w apps/control-room
 ```
 
-(Windows PowerShell: `$env:PORT=8088; npm run dev -w apps/guard`.)
+(Windows PowerShell: `$env:PORT=8088; npm run dev -w apps/guard` and in a second terminal `$env:GUARD_URL="http://localhost:8088"; npm run dev -w apps/control-room`.)
 
 ### Running the demo (about 3 minutes)
 
@@ -84,6 +86,93 @@ curl localhost:8080/api/state                          # budgets, queue, recent 
 curl "localhost:8080/api/evidence/CASE-1005?format=md" # use the case id shown in the feed
 curl localhost:8080/api/audit/verify
 ```
+
+## Usage example
+
+<img src="docs/screenshots/spend-guard-introduction.jpg" alt="Control room, idle" width="800">
+
+The control room before any spend: policy badge and FINOS chain in the header, spend KPIs, case budgets, the live feed, the approval queue and the audit log, with the **Demo** menu to start a scenario.
+
+Each scenario below can be run from the **Demo** menu or with the `curl` command shown (guard on port 8080).
+
+### S1 Normal loan case
+Small spends (LLM, KYC, credit score) are all within the agent's signing limit, so they are auto-approved.
+
+<img src="docs/screenshots/s1-normal.jpg" alt="S1 normal loan case" width="800">
+
+```sh
+curl -X POST localhost:8080/api/scenarios/S1/run
+```
+
+### S2 Four-eyes
+A $28 full credit report is above the $25 four-eyes limit, so two distinct approvers must sign it off; the same person twice is refused.
+
+<img src="docs/screenshots/s2-four-eyes.jpg" alt="S2 four-eyes" width="800">
+
+```sh
+curl -X POST localhost:8080/api/scenarios/S2/run
+```
+
+### S3 Structuring
+The agent splits a $9 purchase into three $3 purchases to stay under its signing limit; the third is escalated and linked to the first two.
+
+<img src="docs/screenshots/s3-structuring.jpg" alt="S3 structuring" width="800">
+
+```sh
+curl -X POST localhost:8080/api/scenarios/S3/run
+```
+
+### S4 Delegation
+The loan agent hands the fraud helper $3 of its own authority; the helper spends from the same budget and cannot buy anything outside the grant or hand work on.
+
+<img src="docs/screenshots/s4-delegation.jpg" alt="S4 delegation" width="800">
+
+```sh
+curl -X POST localhost:8080/api/scenarios/S4/run
+```
+
+### S5 Runaway agent
+The agent loops the same premium LLM call; after five requests it is frozen like a blocked card until a human resumes it.
+
+<img src="docs/screenshots/s5-runaway.jpg" alt="S5 runaway agent" width="800">
+
+```sh
+curl -X POST localhost:8080/api/scenarios/S5/run
+```
+
+### One spend request, one decision
+This is the call an agent developer makes. The credit report is above the four-eyes limit, so it is escalated (the `ruleTrace` of per-rule results is left out here):
+
+```sh
+curl -X POST localhost:8080/api/spend -H "content-type: application/json" -d '{
+  "caseId": "CASE-1002", "agentId": "loan-agent", "kind": "service",
+  "service": "credit-bureau.full-report", "purpose": "Full credit report for mortgage"
+}'
+```
+
+```json
+{
+  "requestId": "req-0001",
+  "status": "pending",
+  "decision": {
+    "outcome": "escalate",
+    "reasonCode": "FOUR_EYES",
+    "reason": "$28.00 is above $25.00: two distinct approvers are required (four-eyes).",
+    "ruleId": "SG-04",
+    "approvalsRequired": 2,
+    "policyVersion": "1.0.0",
+    "calmControl": "agent-spend-guard#agent-spend-authority",
+    "limitsSnapshot": { "tier": "T2", "autoApproveUpTo": 5, "remaining": 40 }
+  }
+}
+```
+
+### Decision detail and evidence report
+<img src="docs/screenshots/evidence-case-1005.jpg" alt="Decision detail for one request in S5" width="380">
+
+*Decision detail for one request in S5: rule fired, AIGF risks, CCC controls, CALM control and trace ID*
+
+Full per-case AIGF / CCC / CALM evidence report (who spent what, under which rule, approved by whom): [sample for CASE-1005](finos/evidence/sample-evidence-CASE-1005.md).
 
 ## The policy (a DoA matrix as code)
 
@@ -114,7 +203,7 @@ npm run check:dco        # lists commits without a Signed-off-by trailer (prints
 npm run build            # build the control room
 ```
 
-`finos:validate` runs the CALM CLI through `npx`, so it needs network access the first time and can take a while. It accepts the 18 known upstream `ai-steel-thread.local` requirement-URL errors plus our YAML `config-url` (the CLI only parses JSON configs); any other error fails.
+`finos:validate` runs the CALM CLI through `npx`, so it needs network access the first time and can take a while. It accepts only the 19 known errors described in the FINOS section above; any other error fails.
 
 Optional environment variables: `PORT` (guard port), `SPENDGUARD_STRICT=0` (downgrade a broken CALM binding to a warning), `FLUXNOVA_URL` (start the Fluxnova worker). Runtime data (`data/audit.jsonl`, `data/traces.jsonl`) is gitignored.
 

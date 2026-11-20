@@ -9,7 +9,7 @@ The FINOS Steel Thread governs *what* the loan agent decides, and it already mea
 
 The policy is a YAML file that reads like a bank's **delegation-of-authority (DoA) matrix**: signing limits, four-eyes, budgets per case, merchant restrictions, and agent-to-agent delegation where authority only narrows. A compliance control room shows live spend, the approval queue, a tamper-evident audit log and a per-case evidence report.
 
-There is no demo video: the project is presented live. Screenshots of every scenario are in the Usage example section below.
+**Recorded presentation (9 min):** [watch on Google Drive](https://drive.google.com/file/d/1V2pQWkpyNJ69wo6uZ-jQ4w5_3G8lDGte/view?usp=sharing). Screenshots of every scenario are in the Usage example section below.
 
 ## The FINOS projects working as one pipeline
 
